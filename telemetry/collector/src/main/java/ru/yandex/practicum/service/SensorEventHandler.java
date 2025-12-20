@@ -3,21 +3,25 @@ package ru.yandex.practicum.service;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.model.sensor.SensorEvent;
+import ru.yandex.practicum.model.sensor.SensorEventType;
 import ru.yandex.practicum.service.converter.SensorEventConverter;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class SensorEventHandler {
 
-    private final Map<String, SensorEventConverter> converters;
+    private final Map<SensorEventType, SensorEventConverter> converters;
 
-    public SensorEventHandler(Map<String, SensorEventConverter> converters) {
-        this.converters = converters;
+    public SensorEventHandler(List<SensorEventConverter> converterList) {
+        this.converters = converterList.stream()
+                .collect(Collectors.toMap(SensorEventConverter::getType, c -> c));
     }
 
     public SensorEventAvro toAvro(SensorEvent sensorEvent) {
-        var converter = converters.get(sensorEvent.getType().toString());
+        SensorEventConverter converter = converters.get(sensorEvent.getType());
         if (converter == null) {
             throw new IllegalArgumentException("Unknown sensor event type: " + sensorEvent.getType());
         }

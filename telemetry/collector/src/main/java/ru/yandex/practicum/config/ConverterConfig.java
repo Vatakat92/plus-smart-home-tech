@@ -2,6 +2,7 @@ package ru.yandex.practicum.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import ru.yandex.practicum.model.sensor.SensorEventType;
 import ru.yandex.practicum.service.converter.SensorEventConverter;
 
 import java.util.List;
@@ -12,10 +13,10 @@ import java.util.stream.Collectors;
 public class ConverterConfig {
 
     @Bean
-    public Map<String, SensorEventConverter> sensorConverters(List<SensorEventConverter> converters) {
+    public Map<SensorEventType, SensorEventConverter> sensorConverters(List<SensorEventConverter> converters) {
         return converters.stream()
                 .collect(Collectors.toMap(
-                        c -> c.getEventType().toString(),
+                        SensorEventConverter::getType,
                         c -> c
                 ));
     }

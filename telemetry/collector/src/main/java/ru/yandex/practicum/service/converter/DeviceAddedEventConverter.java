@@ -22,7 +22,7 @@ public class DeviceAddedEventConverter implements HubEventConverter {
     }
 
     @Override
-    public HubEventType getEventType() {
+    public HubEventType getType() {
         return HubEventType.DEVICE_ADDED;
     }
 

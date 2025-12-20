@@ -5,7 +5,8 @@ import ru.yandex.practicum.model.sensor.SensorEvent;
 import ru.yandex.practicum.model.sensor.SensorEventType;
 
 public interface SensorEventConverter {
+
     SpecificRecordBase convert(SensorEvent event);
 
-    SensorEventType getEventType();
+    SensorEventType getType();
 }

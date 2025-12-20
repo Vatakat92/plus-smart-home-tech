@@ -19,7 +19,7 @@ public class SwitchSensorConverter implements SensorEventConverter {
     }
 
     @Override
-    public SensorEventType getEventType() {
+    public SensorEventType getType() {
         return SensorEventType.SWITCH_SENSOR_EVENT;
     }
 }

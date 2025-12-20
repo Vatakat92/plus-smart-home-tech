@@ -19,7 +19,7 @@ public class DeviceRemovedEventConverter implements HubEventConverter {
     }
 
     @Override
-    public HubEventType getEventType() {
+    public HubEventType getType() {
         return HubEventType.DEVICE_REMOVED;
     }
 }

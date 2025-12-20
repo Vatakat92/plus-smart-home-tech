@@ -14,7 +14,6 @@ import java.io.IOException;
 @SuppressWarnings("unused")
 public class GeneralAvroSerializer implements Serializer<SpecificRecordBase> {
     private final EncoderFactory encoderFactory;
-    private BinaryEncoder encoder;
 
     public GeneralAvroSerializer() {
         this(EncoderFactory.get());
@@ -27,15 +26,14 @@ public class GeneralAvroSerializer implements Serializer<SpecificRecordBase> {
     @Override
     public byte[] serialize(String topic, SpecificRecordBase data) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            byte[] result = null;
-            encoder = encoderFactory.binaryEncoder(out, encoder);
             if (data != null) {
                 DatumWriter<SpecificRecordBase> writer = new SpecificDatumWriter<>(data.getSchema());
+                BinaryEncoder encoder = encoderFactory.binaryEncoder(out, null);
                 writer.write(data, encoder);
                 encoder.flush();
-                result = out.toByteArray();
+                return out.toByteArray();
             }
-            return result;
+            return null;
         } catch (IOException ex) {
             throw new SerializationException("Ошибка сериализации данных для топика [" + topic + "]", ex);
         }

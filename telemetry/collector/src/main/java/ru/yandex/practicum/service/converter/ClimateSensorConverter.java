@@ -13,15 +13,19 @@ public class ClimateSensorConverter implements SensorEventConverter {
     @Override
     public SpecificRecordBase convert(SensorEvent event) {
         ClimateSensorEvent climateSensorEvent = (ClimateSensorEvent) event;
+
         return ClimateSensorAvro.newBuilder()
-                .setCo2Level(climateSensorEvent.getCo2Level())
-                .setHumidity(climateSensorEvent.getHumidity())
-                .setTemperatureC(climateSensorEvent.getTemperatureC())
+                .setCo2Level(climateSensorEvent.getCo2Level() != null ? 
+                           climateSensorEvent.getCo2Level() : 0)
+                .setHumidity(climateSensorEvent.getHumidity() != null ? 
+                           climateSensorEvent.getHumidity() : 0)
+                .setTemperatureC(climateSensorEvent.getTemperatureC() != null ? 
+                               climateSensorEvent.getTemperatureC() : 0)
                 .build();
     }
 
     @Override
-    public SensorEventType getEventType() {
+    public SensorEventType getType() {
         return SensorEventType.CLIMATE_SENSOR_EVENT;
     }
 }

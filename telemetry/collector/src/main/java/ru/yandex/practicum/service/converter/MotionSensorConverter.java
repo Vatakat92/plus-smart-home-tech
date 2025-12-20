@@ -12,16 +12,16 @@ public class MotionSensorConverter implements SensorEventConverter {
 
     @Override
     public SpecificRecordBase convert(SensorEvent event) {
-        MotionSensorEvent motionSensorEvent = (MotionSensorEvent) event;
+        MotionSensorEvent motionEvent = (MotionSensorEvent) event;
         return MotionSensorAvro.newBuilder()
-                .setMotion(motionSensorEvent.getMotion())
-                .setVoltage(motionSensorEvent.getVoltage())
-                .setLinkQuality(motionSensorEvent.getLinkQuality())
+                .setMotion(motionEvent.getMotion())
+                .setVoltage(motionEvent.getVoltage() != null ? motionEvent.getVoltage() : 0)
+                .setLinkQuality(motionEvent.getLinkQuality() != null ? motionEvent.getLinkQuality() : 0)
                 .build();
     }
 
     @Override
-    public SensorEventType getEventType() {
+    public SensorEventType getType() {
         return SensorEventType.MOTION_SENSOR_EVENT;
     }
 }

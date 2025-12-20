@@ -7,5 +7,5 @@ import ru.yandex.practicum.model.hubevent.HubEventType;
 public interface HubEventConverter {
     SpecificRecordBase convert(HubEvent event);
 
-    HubEventType getEventType();
+    HubEventType getType();
 }

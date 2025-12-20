@@ -14,12 +14,12 @@ public class ScenarioRemovedEventConverter implements HubEventConverter {
     public SpecificRecordBase convert(HubEvent event) {
         ScenarioRemovedEvent scenarioRemovedEvent = (ScenarioRemovedEvent) event;
         return ScenarioRemovedEventAvro.newBuilder()
-                .setName(scenarioRemovedEvent.getName())
+                .setName(scenarioRemovedEvent.getName()) // используем существующую строку
                 .build();
     }
 
     @Override
-    public HubEventType getEventType() {
+    public HubEventType getType() {
         return HubEventType.SCENARIO_REMOVED;
     }
 }

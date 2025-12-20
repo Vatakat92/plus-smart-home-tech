@@ -25,14 +25,14 @@ public class ScenarioAddedEventConverter implements HubEventConverter {
                 .toList();
 
         return ScenarioAddedEventAvro.newBuilder()
-                .setName(scenarioAddedEvent.getName())
+                .setName(scenarioAddedEvent.getName()) // используем существующую строку
                 .setActions(actionsAvros)
                 .setConditions(conditionAvros)
                 .build();
     }
 
     @Override
-    public HubEventType getEventType() {
+    public HubEventType getType() {
         return HubEventType.SCENARIO_ADDED;
     }
 
@@ -40,7 +40,7 @@ public class ScenarioAddedEventConverter implements HubEventConverter {
         return ScenarioConditionAvro.newBuilder()
                 .setOperation(toAvro(scenarioCondition.getOperation()))
                 .setType(toAvro(scenarioCondition.getType()))
-                .setSensorId(scenarioCondition.getSensorId())
+                .setSensorId(scenarioCondition.getSensorId()) // используем существующую строку
                 .setValue(scenarioCondition.getValue())
                 .build();
     }

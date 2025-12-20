@@ -35,6 +35,7 @@ public abstract class HubEvent {
     @NotNull
     private String hubId;
 
+    @NotNull
     @Builder.Default
     private Instant timestamp = Instant.now();
 

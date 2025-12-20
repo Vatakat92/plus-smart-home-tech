@@ -13,14 +13,17 @@ public class LightSensorConverter implements SensorEventConverter {
     @Override
     public SpecificRecordBase convert(SensorEvent event) {
         LightSensorEvent lightSensorEvent = (LightSensorEvent) event;
+
         return LightSensorAvro.newBuilder()
-                .setLinkQuality(lightSensorEvent.getLinkQuality())
-                .setLuminosity(lightSensorEvent.getLuminosity())
+                .setLinkQuality(lightSensorEvent.getLinkQuality() != null ? 
+                              lightSensorEvent.getLinkQuality() : 0)
+                .setLuminosity(lightSensorEvent.getLuminosity() != null ? 
+                             lightSensorEvent.getLuminosity() : 0)
                 .build();
     }
 
     @Override
-    public SensorEventType getEventType() {
+    public SensorEventType getType() {
         return SensorEventType.LIGHT_SENSOR_EVENT;
     }
 }
