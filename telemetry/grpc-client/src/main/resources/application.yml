@@ -1,0 +1,14 @@
+server:
+  port: 8081
+
+grpc:
+  client:
+    echo:
+      address: 'static://127.0.0.1:9090'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
+
+spring:
+  application:
+    name: grpc-client
