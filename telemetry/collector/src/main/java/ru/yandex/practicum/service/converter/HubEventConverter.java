@@ -1,11 +1,10 @@
 package ru.yandex.practicum.service.converter;
 
 import org.apache.avro.specific.SpecificRecordBase;
-import ru.yandex.practicum.model.hubevent.HubEvent;
-import ru.yandex.practicum.model.hubevent.HubEventType;
+import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
 
 public interface HubEventConverter {
-    SpecificRecordBase convert(HubEvent event);
+    SpecificRecordBase convert(HubEventProto event);
 
-    HubEventType getType();
+    HubEventProto.PayloadCase getType();
 }

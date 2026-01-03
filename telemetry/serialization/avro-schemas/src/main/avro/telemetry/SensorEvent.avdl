@@ -1,105 +1,37 @@
 @namespace("ru.yandex.practicum.kafka.telemetry.event")
 protocol SensorEventProtocol {
-	/**
-	 * Schema representing data from climate sensor.
-	 */
+
 	record ClimateSensorAvro {
-		/**
-		 * Temperature in Celsius.
-		 */
 		int temperature_c;
-
-		/**
-		 * Humidity level.
-		 */
 		int humidity;
-
-		/**
-		 * Carbon dioxide level.
-		 */
 		int co2_level;
 	}
 
-	/**
-	 * Schema representing telemetry data from light sensor.
-	 */
 	record LightSensorAvro {
-		/**
-		 * Signal link quality.
-		 */
 		int link_quality;
-
-		/**
-		 * Luminosity level.
-		 */
 		int luminosity;
 	}
 
-	/**
-	 * Schema representing telemetry data from motion sensor.
-	 */
 	record MotionSensorAvro {
-		/**
-		 * Signal link quality.
-		 */
 		int link_quality;
-
-		/**
-		 * Indicates whether motion is detected.
-		 */
 		boolean motion;
-
-		/**
-		 * Voltage level.
-		 */
 		int voltage;
 	}
 
-	/**
-	 * Schema representing telemetry data from switch sensor.
-	 */
 	record SwitchSensorAvro {
-		/**
-		 * Current state of the switch (on/off).
-		 */
-		boolean state;
+		boolean stat;
 	}
 
-	/**
-	 * Schema representing telemetry data from temperature sensor.
-	 */
 	record TemperatureSensorAvro {
-		/**
-		 * Temperature in Celsius.
-		 */
 		int temperature_c;
-
-		/**
-		 * Temperature in Fahrenheit.
-		 */
 		int temperature_f;
 	}
 
-	/**
-	 * Schema representing data for sensor event.
-	 */
 	record SensorEventAvro {
-		/**
-		 * Identifier for the sensor.
-		 */
 		string id;
-
-		/**
-		 * Identifier for the hub to which the sensor is connected.
-		 */
 		string hubId;
-
-		/**
-		 * Timestamp indicating when the telemetry event occurred.
-		 */
 		timestamp_ms timestamp;
-
-		union {
+		union{
 			ClimateSensorAvro,
 			LightSensorAvro,
 			MotionSensorAvro,

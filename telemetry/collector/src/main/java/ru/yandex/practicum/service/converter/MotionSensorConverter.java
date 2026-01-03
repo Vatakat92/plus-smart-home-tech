@@ -2,26 +2,25 @@ package ru.yandex.practicum.service.converter;
 
 import org.apache.avro.specific.SpecificRecordBase;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.grpc.telemetry.event.MotionSensorProto;
+import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.MotionSensorAvro;
-import ru.yandex.practicum.model.sensor.SensorEvent;
-import ru.yandex.practicum.model.sensor.SensorEventType;
-import ru.yandex.practicum.model.sensor.events.MotionSensorEvent;
 
 @Component
 public class MotionSensorConverter implements SensorEventConverter {
 
     @Override
-    public SpecificRecordBase convert(SensorEvent event) {
-        MotionSensorEvent motionEvent = (MotionSensorEvent) event;
+    public SpecificRecordBase convert(SensorEventProto event) {
+        MotionSensorProto motionSensor = event.getMotionSensor();
         return MotionSensorAvro.newBuilder()
-                .setMotion(motionEvent.getMotion())
-                .setVoltage(motionEvent.getVoltage() != null ? motionEvent.getVoltage() : 0)
-                .setLinkQuality(motionEvent.getLinkQuality() != null ? motionEvent.getLinkQuality() : 0)
+                .setLinkQuality(motionSensor.getLinkQuality())
+                .setMotion(motionSensor.getMotion())
+                .setVoltage(motionSensor.getVoltage())
                 .build();
     }
 
     @Override
-    public SensorEventType getType() {
-        return SensorEventType.MOTION_SENSOR_EVENT;
+    public SensorEventProto.PayloadCase getType() {
+        return SensorEventProto.PayloadCase.MOTION_SENSOR;
     }
 }
