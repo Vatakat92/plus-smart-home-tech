@@ -15,7 +15,7 @@
     <properties>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring-boot.version>3.3.2</spring-boot.version> <!-- синхронизируй с нужной версией -->
+        <spring-boot.version>3.3.2</spring-boot.version>
     </properties>
 
     <dependencies>
@@ -50,7 +50,6 @@
 
     <build>
         <plugins>
-            <!-- Главное — вот эта часть для executable jar -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -58,6 +57,7 @@
                 <executions>
                     <execution>
                         <id>repackage</id>
+                        <phase>package</phase>
                         <goals>
                             <goal>repackage</goal>
                         </goals>
@@ -67,7 +67,6 @@
                     <mainClass>ru.yandex.practicum.AggregatorApplication</mainClass>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
