@@ -1,5 +1,6 @@
 package ru.yandex.practicum.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 public class HubEventHandler {
     private final Map<HubEventProto.PayloadCase, HubEventConverter> converters;
@@ -17,6 +19,10 @@ public class HubEventHandler {
     public HubEventHandler(List<HubEventConverter> converterList) {
         this.converters = converterList.stream()
                 .collect(Collectors.toMap(HubEventConverter::getType, c -> c));
+        log.info("Зарегистрированные конвертеры для HubEvent: {}",
+                converters.keySet().stream()
+                        .map(Enum::name)
+                        .collect(Collectors.joining(", ")));
     }
 
     public HubEventAvro toAvro(HubEventProto hubEvent) {

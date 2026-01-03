@@ -23,12 +23,25 @@ public class EventController extends CollectorControllerGrpc.CollectorController
 
     @Override
     public void collectHubEvent(HubEventProto hubProto, StreamObserver<Empty> responseObserver) {
+        log.info("Получен HubEvent | тип: {}, hub: {}", hubProto.getPayloadCase(), hubProto.getHubId());
+
+        if (hubProto.getPayloadCase() == HubEventProto.PayloadCase.SCENARIO_ADDED) {
+            log.info("SCENARIO_ADDED: name='{}', conditions={}, actions={}",
+                    hubProto.getScenarioAdded().getName(),
+                    hubProto.getScenarioAdded().getConditionCount(),
+                    hubProto.getScenarioAdded().getActionCount());
+        }
+
         try {
             kafkaEventSender.send(hubProto);
+            log.info("Успешно отправлено в Kafka: {}", hubProto.getPayloadCase());
             responseObserver.onNext(Empty.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (Exception e) {
-            responseObserver.onError(new StatusRuntimeException(Status.fromThrowable(e)));
+            log.error("Ошибка при отправке HubEvent в Kafka | тип: {}", hubProto.getPayloadCase(), e);
+            responseObserver.onError(new StatusRuntimeException(
+                    Status.INTERNAL.withDescription("Kafka error: " + e.getMessage()).withCause(e)
+            ));
         }
     }
 
