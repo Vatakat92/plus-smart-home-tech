@@ -2,28 +2,24 @@ package ru.yandex.practicum.service.converter;
 
 import org.apache.avro.specific.SpecificRecordBase;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.grpc.telemetry.event.LightSensorProto;
+import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.LightSensorAvro;
-import ru.yandex.practicum.model.sensor.SensorEvent;
-import ru.yandex.practicum.model.sensor.SensorEventType;
-import ru.yandex.practicum.model.sensor.events.LightSensorEvent;
 
 @Component
 public class LightSensorConverter implements SensorEventConverter {
 
     @Override
-    public SpecificRecordBase convert(SensorEvent event) {
-        LightSensorEvent lightSensorEvent = (LightSensorEvent) event;
-
+    public SpecificRecordBase convert(SensorEventProto event) {
+        LightSensorProto lightSensor = event.getLightSensor();
         return LightSensorAvro.newBuilder()
-                .setLinkQuality(lightSensorEvent.getLinkQuality() != null ? 
-                              lightSensorEvent.getLinkQuality() : 0)
-                .setLuminosity(lightSensorEvent.getLuminosity() != null ? 
-                             lightSensorEvent.getLuminosity() : 0)
+                .setLinkQuality(lightSensor.getLinkQuality())
+                .setLuminosity(lightSensor.getLuminosity())
                 .build();
     }
 
     @Override
-    public SensorEventType getType() {
-        return SensorEventType.LIGHT_SENSOR_EVENT;
+    public SensorEventProto.PayloadCase getType() {
+        return SensorEventProto.PayloadCase.LIGHT_SENSOR;
     }
 }

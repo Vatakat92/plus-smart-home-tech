@@ -2,8 +2,8 @@ package ru.yandex.practicum.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import ru.yandex.practicum.model.sensor.SensorEventType;
-import ru.yandex.practicum.service.converter.SensorEventConverter;
+import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
+import ru.yandex.practicum.service.converter.HubEventConverter;
 
 import java.util.List;
 import java.util.Map;
@@ -13,10 +13,10 @@ import java.util.stream.Collectors;
 public class ConverterConfig {
 
     @Bean
-    public Map<SensorEventType, SensorEventConverter> sensorConverters(List<SensorEventConverter> converters) {
+    public Map<HubEventProto.PayloadCase, HubEventConverter> hubConverters(List<HubEventConverter> converters) {
         return converters.stream()
                 .collect(Collectors.toMap(
-                        SensorEventConverter::getType,
+                        HubEventConverter::getType,
                         c -> c
                 ));
     }
