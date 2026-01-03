@@ -17,6 +17,7 @@
         <module>collector</module>
         <module>grpc-client</module>
         <module>grpc-server</module>
+        <module>aggregator</module>
     </modules>
 
 </project>
