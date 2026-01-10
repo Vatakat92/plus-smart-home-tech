@@ -25,10 +25,10 @@ public class KafkaProducerConfig {
     @Value("${kafka.producer.retries:3}")
     private int retries;
 
-    @Value("${kafka.producer.request-timeout-ms:30000}")
+    @Value("${kafka.producer.request-timeout-ms:3000}")
     private int requestTimeoutMs;
 
-    @Value("${kafka.producer.delivery-timeout-ms:60000}")
+    @Value("${kafka.producer.delivery-timeout-ms:6000}")
     private int deliveryTimeoutMs;
 
     private Properties baseConfig() {

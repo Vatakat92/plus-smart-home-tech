@@ -4,10 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
+import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
-import ru.yandex.practicum.model.hubevent.HubEvent;
-import ru.yandex.practicum.model.sensor.SensorEvent;
 import ru.yandex.practicum.service.HubEventHandler;
 import ru.yandex.practicum.service.SensorEventHandler;
 
@@ -43,15 +43,15 @@ public class KafkaEventSenderImpl implements KafkaEventSender {
     }
 
     @Override
-    public void send(SensorEvent event) {
+    public void send(SensorEventProto event) {
         SensorEventAvro avro = sensorEventHandler.toAvro(event);
-        sendEvent(sensorsTopic, event.getHubId(), avro, sensorProducer, "SensorEvent");
+        sendEvent(sensorsTopic, event.getHubId(), avro, sensorProducer, "SensorEventProto");
     }
 
     @Override
-    public void send(HubEvent event) {
+    public void send(HubEventProto event) {
         HubEventAvro avro = hubEventHandler.toAvro(event);
-        sendEvent(hubsTopic, event.getHubId(), avro, hubProducer, "HubEvent");
+        sendEvent(hubsTopic, event.getHubId(), avro, hubProducer, "HubEventProto");
     }
 
     private <T> void sendEvent(

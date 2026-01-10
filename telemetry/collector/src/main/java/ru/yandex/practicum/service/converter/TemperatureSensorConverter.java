@@ -2,25 +2,24 @@ package ru.yandex.practicum.service.converter;
 
 import org.apache.avro.specific.SpecificRecordBase;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
+import ru.yandex.practicum.grpc.telemetry.event.TemperatureSensorProto;
 import ru.yandex.practicum.kafka.telemetry.event.TemperatureSensorAvro;
-import ru.yandex.practicum.model.sensor.SensorEvent;
-import ru.yandex.practicum.model.sensor.SensorEventType;
-import ru.yandex.practicum.model.sensor.events.TemperatureSensorEvent;
 
 @Component
 public class TemperatureSensorConverter implements SensorEventConverter {
 
     @Override
-    public SpecificRecordBase convert(SensorEvent event) {
-        TemperatureSensorEvent tempEvent = (TemperatureSensorEvent) event;
+    public SpecificRecordBase convert(SensorEventProto event) {
+        TemperatureSensorProto temperatureSensor = event.getTemperatureSensor();
         return TemperatureSensorAvro.newBuilder()
-                .setTemperatureC(tempEvent.getTemperatureC() != null ? tempEvent.getTemperatureC() : 0)
-                .setTemperatureF(tempEvent.getTemperatureF() != null ? tempEvent.getTemperatureF() : 0)
+                .setTemperatureC(temperatureSensor.getTemperatureC())
+                .setTemperatureF(temperatureSensor.getTemperatureF())
                 .build();
     }
 
     @Override
-    public SensorEventType getType() {
-        return SensorEventType.TEMPERATURE_SENSOR_EVENT;
+    public SensorEventProto.PayloadCase getType() {
+        return SensorEventProto.PayloadCase.TEMPERATURE_SENSOR;
     }
 }

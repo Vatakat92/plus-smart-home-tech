@@ -1,12 +1,10 @@
 package ru.yandex.practicum.service.converter;
 
 import org.apache.avro.specific.SpecificRecordBase;
-import ru.yandex.practicum.model.sensor.SensorEvent;
-import ru.yandex.practicum.model.sensor.SensorEventType;
+import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 
 public interface SensorEventConverter {
+    SpecificRecordBase convert(SensorEventProto event);
 
-    SpecificRecordBase convert(SensorEvent event);
-
-    SensorEventType getType();
+    SensorEventProto.PayloadCase getType();
 }
