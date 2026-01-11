@@ -1,6 +1,8 @@
 package ru.yandex.practicum.commerce.warehouse.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
@@ -16,22 +18,42 @@ public class WarehouseController implements WarehouseFeignClient {
     private final WarehouseService warehouseService;
     
     @Override
-    public void addNewProductToWarehouse(@Valid NewProductInWarehouseRequest request) {
-        warehouseService.addNewProductToWarehouse(request);
+    public ResponseEntity<Void> addNewProductToWarehouse(@Valid NewProductInWarehouseRequest request) {
+        try {
+            warehouseService.addNewProductToWarehouse(request);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @Override
-    public BookedProductsDto checkAvailability(@Valid ShoppingCartDto cart) {
-        return warehouseService.checkAvailability(cart);
+    public ResponseEntity<BookedProductsDto> checkAvailability(@Valid ShoppingCartDto cart) {
+        try {
+            BookedProductsDto result = warehouseService.checkAvailability(cart);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @Override
-    public void addProductQuantity(@Valid AddProductToWarehouseRequest request) {
-        warehouseService.addProductQuantity(request);
+    public ResponseEntity<Void> addProductQuantity(@Valid AddProductToWarehouseRequest request) {
+        try {
+            warehouseService.addProductQuantity(request);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @Override
-    public AddressDto getAddress() {
-        return warehouseService.getAddress();
+    public ResponseEntity<AddressDto> getAddress() {
+        try {
+            AddressDto address = warehouseService.getAddress();
+            return ResponseEntity.ok(address);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

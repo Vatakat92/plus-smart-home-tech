@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.commerce.cart.entity.ShoppingCartEntity;
+import ru.yandex.practicum.commerce.cart.exception.ShoppingCartNotFoundException;
 import ru.yandex.practicum.commerce.cart.mapper.ShoppingCartMapper;
 import ru.yandex.practicum.commerce.cart.repository.ShoppingCartRepository;
 import ru.yandex.practicum.commerce.dto.ChangeProductQuantityRequest;
@@ -87,17 +88,16 @@ public class ShoppingCartService {
 
     @Transactional
     public void deactivateCart(String username) {
-        shoppingCartRepository.findByUsername(username)
-                .ifPresent(cart -> {
-                    cart.setIsActive(false);
-                    shoppingCartRepository.save(cart);
-                });
+        ShoppingCartEntity cart = shoppingCartRepository.findByUsername(username)
+                .orElseThrow(() -> new ShoppingCartNotFoundException("Cart not found for user: " + username));
+        cart.setIsActive(false);
+        shoppingCartRepository.save(cart);
     }
 
     @Transactional
     public ShoppingCartDto removeProductsFromCart(String username, List<UUID> productIds) {
         ShoppingCartEntity cart = shoppingCartRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user: " + username));
+                .orElseThrow(() -> new ShoppingCartNotFoundException("Cart not found for user: " + username));
 
         productIds.forEach(productId -> cart.getProducts().remove(productId));
 
@@ -108,7 +108,7 @@ public class ShoppingCartService {
     @Transactional
     public ShoppingCartDto changeProductQuantity(String username, ChangeProductQuantityRequest request) {
         ShoppingCartEntity cart = shoppingCartRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user: " + username));
+                .orElseThrow(() -> new ShoppingCartNotFoundException("Cart not found for user: " + username));
 
         if (cart.getProducts().containsKey(request.getProductId())) {
             if (request.getNewQuantity() <= 0) {

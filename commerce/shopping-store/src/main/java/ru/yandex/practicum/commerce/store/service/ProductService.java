@@ -11,6 +11,7 @@ import ru.yandex.practicum.commerce.enums.ProductCategory;
 import ru.yandex.practicum.commerce.enums.ProductState;
 import ru.yandex.practicum.commerce.enums.QuantityState;
 import ru.yandex.practicum.commerce.store.entity.ProductEntity;
+import ru.yandex.practicum.commerce.store.exception.ProductNotFoundException;
 import ru.yandex.practicum.commerce.store.mapper.ProductMapper;
 import ru.yandex.practicum.commerce.store.repository.ProductRepository;
 
@@ -68,25 +69,21 @@ public class ProductService {
 
     @Transactional
     public boolean removeProductFromStore(UUID productId) {
-        return productRepository.findById(productId)
-                .map(product -> {
-                    product.setProductState(ProductState.DEACTIVATE);
-                    productRepository.save(product);
-                    return true;
-                })
-                .orElse(false);
+        ProductEntity product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
+        product.setProductState(ProductState.DEACTIVATE);
+        productRepository.save(product);
+        return true;
     }
 
     @Transactional
     public boolean setProductQuantityState(SetProductQuantityStateRequest request) {
-        return productRepository.findById(request.getProductId())
-                .map(product -> {
-                    QuantityState state = QuantityState.valueOf(request.getQuantityState().toUpperCase());
-                    product.setQuantityState(state);
-                    productRepository.save(product);
-                    return true;
-                })
-                .orElse(false);
+        ProductEntity product = productRepository.findById(request.getProductId())
+                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
+        QuantityState state = QuantityState.valueOf(request.getQuantityState().toUpperCase());
+        product.setQuantityState(state);
+        productRepository.save(product);
+        return true;
     }
 
     @Transactional(readOnly = true)
@@ -94,7 +91,7 @@ public class ProductService {
         ProductEntity entity = productRepository.findByProductIdAndProductState(productId, ProductState.ACTIVE);
 
         if (entity == null) {
-            throw new RuntimeException("Product not found");
+            throw new ProductNotFoundException("Product not found");
         }
 
         return productMapper.toDto(entity);

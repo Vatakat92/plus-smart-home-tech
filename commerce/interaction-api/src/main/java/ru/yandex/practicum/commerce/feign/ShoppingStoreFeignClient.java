@@ -1,6 +1,7 @@
 package ru.yandex.practicum.commerce.feign;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.commerce.dto.*;
 
@@ -11,22 +12,22 @@ import java.util.UUID;
 public interface ShoppingStoreFeignClient {
     
     @GetMapping("/api/v1/shopping-store")
-    List<ProductDto> getProductsByCategory(@RequestParam(required = false) String category, 
+    ResponseEntity<List<ProductDto>> getProductsByCategory(@RequestParam(required = false) String category, 
                                           @RequestParam(defaultValue = "0") int page,
                                           @RequestParam(defaultValue = "10") int size);
 
     @PutMapping("/api/v1/shopping-store")
-    ProductDto createProduct(@RequestBody ProductDto productDto);
+    ResponseEntity<ProductDto> createProduct(@RequestBody ProductDto productDto);
 
     @PostMapping("/api/v1/shopping-store")
-    ProductDto updateProduct(@RequestBody ProductDto productDto);
+    ResponseEntity<ProductDto> updateProduct(@RequestBody ProductDto productDto);
 
     @PostMapping("/api/v1/shopping-store/removeProductFromStore")
-    Boolean removeProductFromStore(@RequestBody UUID productId);
+    ResponseEntity<Boolean> removeProductFromStore(@RequestBody UUID productId);
 
     @PostMapping("/api/v1/shopping-store/quantityState")
-    Boolean setProductQuantityState(@RequestBody SetProductQuantityStateRequest request);
+    ResponseEntity<Boolean> setProductQuantityState(@RequestBody SetProductQuantityStateRequest request);
 
     @GetMapping("/api/v1/shopping-store/{productId}")
-    ProductDto getProductById(@PathVariable("productId") UUID productId);
+    ResponseEntity<ProductDto> getProductById(@PathVariable("productId") UUID productId);
 }

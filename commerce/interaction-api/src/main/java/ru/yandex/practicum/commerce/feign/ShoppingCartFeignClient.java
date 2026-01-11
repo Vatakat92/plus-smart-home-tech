@@ -1,6 +1,7 @@
 package ru.yandex.practicum.commerce.feign;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.commerce.dto.*;
 
@@ -12,20 +13,20 @@ import java.util.UUID;
 public interface ShoppingCartFeignClient {
 
     @GetMapping("/api/v1/shopping-cart")
-    ShoppingCartDto getUserShoppingCart(@RequestParam("username") String username);
+    ResponseEntity<ShoppingCartDto> getUserShoppingCart(@RequestParam("username") String username);
 
     @PutMapping("/api/v1/shopping-cart")
-    ShoppingCartDto addProductToCart(@RequestParam("username") String username,
+    ResponseEntity<ShoppingCartDto> addProductToCart(@RequestParam("username") String username,
                                      @RequestBody Map<UUID, Integer> productQuantities);
 
     @DeleteMapping("/api/v1/shopping-cart")
-    void deactivateCart(@RequestParam("username") String username);
+    ResponseEntity<Void> deactivateCart(@RequestParam("username") String username);
 
     @PostMapping("/api/v1/shopping-cart/remove")
-    ShoppingCartDto removeProductsFromCart(@RequestParam("username") String username,
+    ResponseEntity<ShoppingCartDto> removeProductsFromCart(@RequestParam("username") String username,
                                            @RequestBody List<UUID> productIds);
 
     @PostMapping("/api/v1/shopping-cart/change-quantity")
-    ShoppingCartDto changeProductQuantity(@RequestParam("username") String username,
+    ResponseEntity<ShoppingCartDto> changeProductQuantity(@RequestParam("username") String username,
                                           @RequestBody ChangeProductQuantityRequest request);
 }
