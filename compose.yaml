@@ -42,6 +42,7 @@ services:
       POSTGRES_DB: smarthome
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_MULTIPLE_DATABASES: shopping_store_db,shopping_cart_db,warehouse_db
     ports:
       - "5432:5432"
     volumes:

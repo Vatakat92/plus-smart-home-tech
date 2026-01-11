@@ -1,0 +1,15 @@
+CREATE SCHEMA IF NOT EXISTS warehouse AUTHORIZATION postgres;
+
+CREATE TABLE IF NOT EXISTS warehouse.products_on_warehouse (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    product_id UUID NOT NULL,
+    quantity INTEGER DEFAULT 0 NOT NULL,
+    fragile BOOLEAN DEFAULT FALSE NOT NULL,
+    width DOUBLE PRECISION,
+    height DOUBLE PRECISION,
+    depth DOUBLE PRECISION,
+    weight DOUBLE PRECISION,
+    address VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -2,7 +2,7 @@ spring:
   application:
     name: analyzer
   datasource:
-    url: jdbc:postgresql://localhost:5432/smarthome
+    url: jdbc:postgresql://localhost:5432/smarthome?currentSchema=analyzer
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
