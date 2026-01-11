@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: collector
+
+server:
+  port: 8082
+
+grpc:
+  server:
+    port: 59091
+
+kafka:
+  bootstrap-servers: localhost:9092
+  topic:
+    sensors: telemetry.sensors.v1
+    hubs: telemetry.hubs.v1
+  producer:
+    acks: all
+    retries: 3
+    request-timeout-ms: 3000
+    delivery-timeout-ms: 6000
+    key-serializer: org.apache.kafka.common.serialization.StringSerializer
+    value-serializer: ru.yandex.practicum.kafka.serializer.GeneralAvroSerializer
