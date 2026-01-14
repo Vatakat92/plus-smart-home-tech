@@ -24,7 +24,7 @@ public interface ShoppingCartFeignClient {
 
     @PostMapping("/api/v1/shopping-cart/remove")
     ResponseEntity<ShoppingCartDto> removeProductsFromCart(@RequestParam("username") String username,
-                                           @RequestBody List<UUID> productIds);
+                                           @RequestBody List<String> productIds);
 
     @PostMapping("/api/v1/shopping-cart/change-quantity")
     ResponseEntity<ShoppingCartDto> changeProductQuantity(@RequestParam("username") String username,

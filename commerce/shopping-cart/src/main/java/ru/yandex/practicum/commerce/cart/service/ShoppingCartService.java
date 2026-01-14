@@ -51,7 +51,6 @@ public class ShoppingCartService {
                     return shoppingCartRepository.save(newCart);
                 });
 
-        // Создаем временную корзину для проверки наличия товаров на складе
         ShoppingCartDto tempCart = new ShoppingCartDto();
         Map<UUID, Integer> tempProducts = new HashMap<>(cartEntity.getProducts());
 
@@ -61,29 +60,14 @@ public class ShoppingCartService {
 
         tempCart.setProducts(tempProducts);
 
-        // Проверяем наличие товаров на складе
         warehouseFeignClient.checkAvailability(tempCart);
 
-        // Добавляем или обновляем продукты в корзине
         productQuantities.forEach((productId, quantity) ->
                 cartEntity.getProducts().merge(productId, quantity, Integer::sum)
         );
 
         ShoppingCartEntity savedCart = shoppingCartRepository.save(cartEntity);
         return shoppingCartMapper.toDto(savedCart);
-    }
-
-    public ShoppingCartDto addProductToCartFallback(String username, Map<UUID, Integer> productQuantities, Exception ex) {
-        log.error("Ошибка при добавлении товаров в корзину. Warehouse сервис недоступен: {}", ex.getMessage());
-        // Возвращаем текущую корзину без изменений
-        return shoppingCartRepository.findByUsername(username)
-                .map(shoppingCartMapper::toDto)
-                .orElseGet(() -> {
-                    ShoppingCartEntity cartEntity = new ShoppingCartEntity();
-                    cartEntity.setUsername(username);
-                    cartEntity.setProducts(new HashMap<>());
-                    return shoppingCartMapper.toDto(shoppingCartRepository.save(cartEntity));
-                });
     }
 
     @Transactional
@@ -95,11 +79,15 @@ public class ShoppingCartService {
     }
 
     @Transactional
-    public ShoppingCartDto removeProductsFromCart(String username, List<UUID> productIds) {
+    public ShoppingCartDto removeProductsFromCart(String username, List<String> productIds) {
         ShoppingCartEntity cart = shoppingCartRepository.findByUsername(username)
                 .orElseThrow(() -> new ShoppingCartNotFoundException("Cart not found for user: " + username));
 
-        productIds.forEach(productId -> cart.getProducts().remove(productId));
+        List<UUID> uuidList = productIds.stream()
+            .map(UUID::fromString)
+            .toList();
+        
+        uuidList.forEach(productId -> cart.getProducts().remove(productId));
 
         ShoppingCartEntity savedCart = shoppingCartRepository.save(cart);
         return shoppingCartMapper.toDto(savedCart);
@@ -108,7 +96,12 @@ public class ShoppingCartService {
     @Transactional
     public ShoppingCartDto changeProductQuantity(String username, ChangeProductQuantityRequest request) {
         ShoppingCartEntity cart = shoppingCartRepository.findByUsername(username)
-                .orElseThrow(() -> new ShoppingCartNotFoundException("Cart not found for user: " + username));
+                .orElseGet(() -> {
+                    ShoppingCartEntity newCart = new ShoppingCartEntity();
+                    newCart.setUsername(username);
+                    newCart.setProducts(new HashMap<>());
+                    return shoppingCartRepository.save(newCart);
+                });
 
         if (cart.getProducts().containsKey(request.getProductId())) {
             if (request.getNewQuantity() <= 0) {
@@ -120,6 +113,18 @@ public class ShoppingCartService {
 
         ShoppingCartEntity savedCart = shoppingCartRepository.save(cart);
         return shoppingCartMapper.toDto(savedCart);
+    }
+    
+    public ShoppingCartDto addProductToCartFallback(String username, Map<UUID, Integer> productQuantities, Throwable ex) {
+        log.error("Ошибка при добавлении товаров в корзину. Сервис склада недоступен: {}. Запрошено добавление продуктов: {}", ex.getMessage(), productQuantities);
+        return shoppingCartRepository.findByUsername(username)
+                .map(shoppingCartMapper::toDto)
+                .orElseGet(() -> {
+                    ShoppingCartEntity cartEntity = new ShoppingCartEntity();
+                    cartEntity.setUsername(username);
+                    cartEntity.setProducts(new HashMap<>());
+                    return shoppingCartMapper.toDto(shoppingCartRepository.save(cartEntity));
+                });
     }
 
 

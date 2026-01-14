@@ -31,5 +31,5 @@ public class ProductDto {
     private ProductCategory productCategory;
     
     @Positive(message = "Price must be positive")
-    private Long price;
+    private Double price;
 }

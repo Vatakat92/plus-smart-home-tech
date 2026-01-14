@@ -1,17 +1,15 @@
 package ru.yandex.practicum.grpc.server.service;
 
 import io.grpc.stub.StreamObserver;
+import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import ru.yandex.practicum.grpc.echo.EchoRequest;
 import ru.yandex.practicum.grpc.echo.EchoResponse;
 import ru.yandex.practicum.grpc.echo.EchoServiceGrpc;
 
 @GrpcService
+@Slf4j
 public class EchoService extends EchoServiceGrpc.EchoServiceImplBase {
-
-    private final Logger log = LoggerFactory.getLogger(getClass());
 
     @Override
     public void echo(EchoRequest request, StreamObserver<EchoResponse> responseObserver) {

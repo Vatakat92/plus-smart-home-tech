@@ -45,7 +45,7 @@ public class ProductEntity {
     private ProductCategory productCategory;
 
     @Column(name = "price", nullable = false)
-    private Long price;
+    private Double price;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
