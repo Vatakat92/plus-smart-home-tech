@@ -24,10 +24,10 @@ import ru.yandex.practicum.commerce.dto.PagedResponseDto;
 import ru.yandex.practicum.commerce.dto.SortedContentResponseDto;
 import ru.yandex.practicum.commerce.store.entity.ProductEntity;
 import ru.yandex.practicum.commerce.store.mapper.ProductMapper;
+import ru.yandex.practicum.commerce.validation.ValidationService;
+import ru.yandex.practicum.commerce.exception.ResourceNotFoundException;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+
 
 
 @Slf4j
@@ -39,12 +39,7 @@ public class ShoppingStoreController implements ShoppingStoreFeignClient {
     
     private final ProductService productService;
     private final ProductMapper productMapper;
-    
-    private static final Set<String> ALLOWED_SORT_FIELDS = new HashSet<>(Arrays.asList(
-        "productName", "price", "productCategory", "quantityState", "productState", "createdAt"
-    ));
-    
-    private static final Set<String> ALLOWED_SORT_DIRECTIONS = new HashSet<>(Arrays.asList("ASC", "DESC"));
+    private final ValidationService validationService;
     
     @Override
     @GetMapping("/api/v1/shopping-store")
@@ -56,11 +51,7 @@ public class ShoppingStoreController implements ShoppingStoreFeignClient {
             @RequestParam(required = false, defaultValue = "ASC") String sortDir,
             @RequestParam(required = false) String sort) {
         try {
-            // Ограничиваем максимальный размер страницы
-            int maxSize = Math.min(size, 100);  // максимальный размер страницы 100
-            if (size != maxSize) {
-                log.warn("Requested size {} exceeds maximum allowed size, using {} instead", size, maxSize);
-            }
+            int maxSize = validationService.validatePageSize(size);
             
             String actualSortBy = sortBy;
             String actualSortDir = sortDir;
@@ -76,15 +67,8 @@ public class ShoppingStoreController implements ShoppingStoreFeignClient {
                 }
             }
             
-            // Валидируем поля сортировки
-            if (!ALLOWED_SORT_FIELDS.contains(actualSortBy)) {
-                log.warn("Invalid sort field: {}, using default productName", actualSortBy);
-                actualSortBy = "productName";
-            }
-            if (!ALLOWED_SORT_DIRECTIONS.contains(actualSortDir)) {
-                log.warn("Invalid sort direction: {}, using default ASC", actualSortDir);
-                actualSortDir = "ASC";
-            }
+            actualSortBy = validationService.validateSortField(actualSortBy);
+            actualSortDir = validationService.validateSortDirection(actualSortDir);
             
             log.info("Getting products by category: {}, page: {}, size: {}, sortBy: {}, sortDir: {}", 
                      category, page, maxSize, actualSortBy, actualSortDir);
@@ -118,13 +102,12 @@ public class ShoppingStoreController implements ShoppingStoreFeignClient {
             @RequestParam(required = false, defaultValue = "ASC") String sortDir,
             @RequestParam(required = false) String sort) {
         try {
-            // Ограничиваем максимальный размер страницы
-            int maxSize = Math.min(size, 100);
+            int maxSize = validationService.validatePageSize(size);
             return getProductsByCategoryWithContent(null, page, maxSize, sortBy, sortDir, sort);
         } catch (Exception e) {
             log.error("Error getting all products with content: {}", e.getMessage());
-            String actualSortBy = sortBy;
-            String actualSortDir = sortDir;
+            String actualSortBy = validationService.validateSortField(sortBy);
+            String actualSortDir = validationService.validateSortDirection(sortDir);
             
             // Если передан параметр sort в формате "field,direction", парсим его
             if (sort != null && !sort.isEmpty()) {
@@ -137,15 +120,8 @@ public class ShoppingStoreController implements ShoppingStoreFeignClient {
                 }
             }
             
-            // Валидируем поля сортировки
-            if (!ALLOWED_SORT_FIELDS.contains(actualSortBy)) {
-                log.warn("Invalid sort field: {}, using default productName", actualSortBy);
-                actualSortBy = "productName";
-            }
-            if (!ALLOWED_SORT_DIRECTIONS.contains(actualSortDir)) {
-                log.warn("Invalid sort direction: {}, using default ASC", actualSortDir);
-                actualSortDir = "ASC";
-            }
+            actualSortBy = validationService.validateSortField(actualSortBy);
+            actualSortDir = validationService.validateSortDirection(actualSortDir);
             
             String sortProperty = actualSortBy != null ? actualSortBy : "productName";
             String sortDirection = actualSortDir != null ? actualSortDir : "ASC";
@@ -166,10 +142,10 @@ public class ShoppingStoreController implements ShoppingStoreFeignClient {
             @RequestParam(required = false, defaultValue = "ASC") String sortDir,
             @RequestParam(required = false) String sort) {
         try {
-            int maxSize = Math.min(size, 100);
+            int maxSize = validationService.validatePageSize(size);
             
-            String actualSortBy = sortBy;
-            String actualSortDir = sortDir;
+            String actualSortBy = validationService.validateSortField(sortBy);
+            String actualSortDir = validationService.validateSortDirection(sortDir);
 
             if (sort != null && !sort.isEmpty()) {
                 String[] sortParts = sort.split(",");
@@ -181,14 +157,8 @@ public class ShoppingStoreController implements ShoppingStoreFeignClient {
                 }
             }
 
-            if (!ALLOWED_SORT_FIELDS.contains(actualSortBy)) {
-                log.warn("Invalid sort field: {}, using default productName", actualSortBy);
-                actualSortBy = "productName";
-            }
-            if (!ALLOWED_SORT_DIRECTIONS.contains(actualSortDir)) {
-                log.warn("Invalid sort direction: {}, using default ASC", actualSortDir);
-                actualSortDir = "ASC";
-            }
+            actualSortBy = validationService.validateSortField(actualSortBy);
+            actualSortDir = validationService.validateSortDirection(actualSortDir);
             
             List<ProductDto> products = productService.getProductsByCategory(category, page, maxSize, actualSortBy, actualSortDir);
             String sortProperty = actualSortBy != null ? actualSortBy : "productName";
@@ -200,8 +170,8 @@ public class ShoppingStoreController implements ShoppingStoreFeignClient {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("Error getting products by category with content: {}", e.getMessage());
-            String actualSortBy = sortBy;
-            String actualSortDir = sortDir;
+            String actualSortBy = validationService.validateSortField(sortBy);
+            String actualSortDir = validationService.validateSortDirection(sortDir);
 
             if (sort != null && !sort.isEmpty()) {
                 String[] sortParts = sort.split(",");
@@ -213,14 +183,8 @@ public class ShoppingStoreController implements ShoppingStoreFeignClient {
                 }
             }
 
-            if (!ALLOWED_SORT_FIELDS.contains(actualSortBy)) {
-                log.warn("Invalid sort field: {}, using default productName", actualSortBy);
-                actualSortBy = "productName";
-            }
-            if (!ALLOWED_SORT_DIRECTIONS.contains(actualSortDir)) {
-                log.warn("Invalid sort direction: {}, using default ASC", actualSortDir);
-                actualSortDir = "ASC";
-            }
+            actualSortBy = validationService.validateSortField(actualSortBy);
+            actualSortDir = validationService.validateSortDirection(actualSortDir);
             
             String sortProperty = actualSortBy != null ? actualSortBy : "productName";
             String sortDirection = actualSortDir != null ? actualSortDir : "ASC";
@@ -240,7 +204,7 @@ public class ShoppingStoreController implements ShoppingStoreFeignClient {
             @RequestParam(required = false, defaultValue = "ASC") String sortDir,
             @RequestParam(required = false) String sort) {
         try {
-            int maxSize = Math.min(size, 100);
+            int maxSize = validationService.validatePageSize(size);
             return getProductsPaginated(null, page, maxSize, sortBy, sortDir, sort);
         } catch (Exception e) {
             log.error("Error getting all paginated products: {}", e.getMessage(), e);
@@ -257,10 +221,10 @@ public class ShoppingStoreController implements ShoppingStoreFeignClient {
             @RequestParam(required = false, defaultValue = "ASC") String sortDir,
             @RequestParam(required = false) String sort) {
         try {
-            int maxSize = Math.min(size, 100);
+            int maxSize = validationService.validatePageSize(size);
             
-            String actualSortBy = sortBy;
-            String actualSortDir = sortDir;
+            String actualSortBy = validationService.validateSortField(sortBy);
+            String actualSortDir = validationService.validateSortDirection(sortDir);
 
             if (sort != null && !sort.isEmpty()) {
                 String[] sortParts = sort.split(",");
@@ -272,14 +236,8 @@ public class ShoppingStoreController implements ShoppingStoreFeignClient {
                 }
             }
 
-            if (!ALLOWED_SORT_FIELDS.contains(actualSortBy)) {
-                log.warn("Invalid sort field: {}, using default productName", actualSortBy);
-                actualSortBy = "productName";
-            }
-            if (!ALLOWED_SORT_DIRECTIONS.contains(actualSortDir)) {
-                log.warn("Invalid sort direction: {}, using default ASC", actualSortDir);
-                actualSortDir = "ASC";
-            }
+            actualSortBy = validationService.validateSortField(actualSortBy);
+            actualSortDir = validationService.validateSortDirection(actualSortDir);
             
             Page<ProductEntity> entityPage = productService.getProductsPage(category, page, maxSize, actualSortBy, actualSortDir);
             List<ProductDto> content = entityPage.getContent().stream()
@@ -342,9 +300,12 @@ public class ShoppingStoreController implements ShoppingStoreFeignClient {
     @Override
     public ResponseEntity<ProductDto> setProductQuantityState(@NotNull String productId, @NotNull String quantityState) {
         try {
-            UUID productIdUuid = UUID.fromString(productId);
+            UUID productIdUuid = validationService.validateAndConvertProductId(productId);
             ProductDto result = productService.setProductQuantityState(productIdUuid, quantityState);
             return ResponseEntity.ok(result);
+        } catch (ResourceNotFoundException e) {
+            log.error("Product not found: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
             log.error("Error setting product quantity state: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

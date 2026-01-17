@@ -34,7 +34,6 @@ public class ProductService {
     
 
 
-    @Transactional(readOnly = true)
     public List<ProductDto> getProductsByCategory(String categoryStr, int page, int size, String sortBy, String sortDir) {
         Optional<ProductCategory> category = Optional.ofNullable(categoryStr)
                 .filter(cat -> !cat.isEmpty())
@@ -53,7 +52,6 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
     public Page<ProductEntity> getProductsPage(String categoryStr, int page, int size, String sortBy, String sortDir) {
         Optional<ProductCategory> category = Optional.ofNullable(categoryStr)
                 .filter(cat -> !cat.isEmpty())
@@ -122,7 +120,6 @@ public class ProductService {
         return productMapper.toDto(updatedProduct);
     }
 
-    @Transactional(readOnly = true)
     public ProductDto getProductById(UUID productId) {
         // Получаем товар независимо от его состояния
         ProductEntity entity = productRepository.findById(productId)

@@ -28,7 +28,6 @@ public class ShoppingCartService {
     private final WarehouseFeignClient warehouseFeignClient;
     private final ShoppingCartMapper shoppingCartMapper;
 
-    @Transactional(readOnly = true)
     public ShoppingCartDto getUserShoppingCart(String username) {
         return shoppingCartRepository.findByUsername(username)
                 .map(shoppingCartMapper::toDto)
@@ -43,6 +42,7 @@ public class ShoppingCartService {
     @CircuitBreaker(name = "warehouse", fallbackMethod = "addProductToCartFallback")
     @Transactional
     public ShoppingCartDto addProductToCart(String username, Map<UUID, Integer> productQuantities) {
+        
         ShoppingCartEntity cartEntity = shoppingCartRepository.findByUsername(username)
                 .orElseGet(() -> {
                     ShoppingCartEntity newCart = new ShoppingCartEntity();

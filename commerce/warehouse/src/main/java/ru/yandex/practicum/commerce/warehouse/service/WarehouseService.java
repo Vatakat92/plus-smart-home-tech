@@ -28,7 +28,6 @@ public class WarehouseService {
         productOnWarehouseRepository.save(entity);
     }
     
-    @Transactional(readOnly = true)
     public BookedProductsDto checkAvailability(ShoppingCartDto cart) {
         double totalWeight = 0.0;
         double totalVolume = 0.0;
@@ -76,7 +75,6 @@ public class WarehouseService {
                 );
     }
     
-    @Transactional(readOnly = true)
     public AddressDto getAddress() {
         String addressValue = RandomAddressGenerator.getCurrentAddress();
         
