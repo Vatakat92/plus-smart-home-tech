@@ -1,3 +1,7 @@
+CREATE SCHEMA IF NOT EXISTS analyzer AUTHORIZATION postgres;
+
+SET search_path TO analyzer, public;
+
 CREATE TABLE IF NOT EXISTS scenarios (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     hub_id VARCHAR,
