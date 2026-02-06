@@ -3,7 +3,6 @@ package ru.yandex.practicum.commerce.warehouse.validation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.commerce.dto.*;
-import ru.yandex.practicum.commerce.warehouse.exception.ProductNotFoundOnWarehouseException;
 
 import java.util.Map;
 import java.util.UUID;
