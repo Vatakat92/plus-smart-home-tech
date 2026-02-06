@@ -3,7 +3,6 @@ package ru.yandex.practicum.commerce.store.validation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.commerce.exception.ResourceNotFoundException;
-import ru.yandex.practicum.commerce.validation.ValidationService;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -12,7 +11,7 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-public class ValidationServiceImpl implements ValidationService {
+public class StoreValidationServiceImpl implements StoreValidationService {
     
     private static final Set<String> ALLOWED_SORT_FIELDS = new HashSet<>(Arrays.asList(
         "productName", "price", "productCategory", "quantityState", "productState", "createdAt"

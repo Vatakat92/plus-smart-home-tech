@@ -2,14 +2,16 @@ package ru.yandex.practicum.commerce.cart.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.validation.annotation.Validated;
+
+import ru.yandex.practicum.commerce.cart.service.ShoppingCartService;
+import ru.yandex.practicum.commerce.contract.shopping.cart.ShoppingCartOperations;
+import ru.yandex.practicum.commerce.contract.shopping.cart.exception.NoProductsInShoppingCartException;
+import ru.yandex.practicum.commerce.contract.shopping.cart.exception.ProductInShoppingCartLowQuantityInWarehouseException;
+import ru.yandex.practicum.commerce.contract.shopping.cart.exception.ProductInShoppingCartNotInWarehouseException;
 import ru.yandex.practicum.commerce.dto.ChangeProductQuantityRequest;
 import ru.yandex.practicum.commerce.dto.ShoppingCartDto;
-import ru.yandex.practicum.commerce.feign.ShoppingCartFeignClient;
-import ru.yandex.practicum.commerce.cart.service.ShoppingCartService;
 
 import java.util.List;
 import java.util.Map;
@@ -19,65 +21,55 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @Validated
-public class ShoppingCartController implements ShoppingCartFeignClient {
-    
+public class ShoppingCartController implements ShoppingCartOperations {
+
     private final ShoppingCartService shoppingCartService;
-    
+
     @Override
-    public ResponseEntity<ShoppingCartDto> getUserShoppingCart(String username) {
-        try {
-            ShoppingCartDto cart = shoppingCartService.getUserShoppingCart(username);
-            return ResponseEntity.ok(cart);
-        } catch (Exception e) {
-            log.error("Error getting user shopping cart for user {}: {}", username, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ShoppingCartDto getShoppingCart(String username) {
+        log.info("Get shopping cart for user {}", username);
+        return shoppingCartService.getShoppingCart(username);
     }
 
     @Override
-    public ResponseEntity<ShoppingCartDto> addProductToCart(String username, Map<UUID, Integer> productQuantities) {
-        try {
-            ShoppingCartDto cart = shoppingCartService.addProductToCart(username, productQuantities);
-            return ResponseEntity.ok(cart);
-        } catch (Exception e) {
-            log.error("Error adding product to cart for user {}: {}", username, e.getMessage());
-            // Возвращаем fallback корзину при ошибке
-            ShoppingCartDto fallbackCart = new ShoppingCartDto();
-            fallbackCart.setProducts(new java.util.HashMap<>());
-            return ResponseEntity.ok(fallbackCart);
-        }
+    public ShoppingCartDto addProductToShoppingCart(
+            String username,
+            Map<UUID, Integer> products)
+            throws ProductInShoppingCartNotInWarehouseException,
+            ProductInShoppingCartLowQuantityInWarehouseException {
+
+        log.info("Add products {} to shopping cart for user {}", products, username);
+        return shoppingCartService.addProductToShoppingCart(username, products);
     }
 
     @Override
-    public ResponseEntity<Void> deactivateCart(String username) {
-        try {
-            shoppingCartService.deactivateCart(username);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            log.error("Error deactivating cart for user {}: {}", username, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ShoppingCartDto removeFromShoppingCart(
+            String username,
+            List<UUID> productIds)
+            throws NoProductsInShoppingCartException {
+
+        log.info("Remove products {} from shopping cart for user {}", productIds, username);
+        return shoppingCartService.removeProductsFromCart(username, productIds);
     }
 
     @Override
-    public ResponseEntity<ShoppingCartDto> removeProductsFromCart(String username, List<String> productIds) {
-        try {
-            ShoppingCartDto cart = shoppingCartService.removeProductsFromCart(username, productIds);
-            return ResponseEntity.ok(cart);
-        } catch (Exception e) {
-            log.error("Error removing products from cart for user {}: {}", username, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ShoppingCartDto changeProductQuantity(
+            String username,
+            ChangeProductQuantityRequest changeProductQuantityRequest)
+            throws NoProductsInShoppingCartException,
+            ProductInShoppingCartNotInWarehouseException,
+            ProductInShoppingCartLowQuantityInWarehouseException {
+
+        log.info("Change quantity for product {} to {} in shopping cart for user {}",
+                changeProductQuantityRequest.getProductId(),
+                changeProductQuantityRequest.getNewQuantity(),
+                username);
+        return shoppingCartService.changeProductQuantity(username, changeProductQuantityRequest);
     }
 
     @Override
-    public ResponseEntity<ShoppingCartDto> changeProductQuantity(String username, ChangeProductQuantityRequest request) {
-        try {
-            ShoppingCartDto cart = shoppingCartService.changeProductQuantity(username, request);
-            return ResponseEntity.ok(cart);
-        } catch (Exception e) {
-            log.error("Error changing product quantity for user {}: {}", username, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public void deactivateCurrentShoppingCart(String username) {
+        log.info("Deactivate shopping cart for user {}", username);
+        shoppingCartService.deactivateCart(username);
     }
 }

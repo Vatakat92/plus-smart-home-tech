@@ -1,12 +1,11 @@
 package ru.yandex.practicum.commerce.store.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Sort;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import ru.yandex.practicum.commerce.dto.ProductDto;
 import ru.yandex.practicum.commerce.enums.ProductCategory;
 import ru.yandex.practicum.commerce.enums.ProductState;
@@ -15,118 +14,108 @@ import ru.yandex.practicum.commerce.store.entity.ProductEntity;
 import ru.yandex.practicum.commerce.store.exception.ProductNotFoundException;
 import ru.yandex.practicum.commerce.store.mapper.ProductMapper;
 import ru.yandex.practicum.commerce.store.repository.ProductRepository;
+import ru.yandex.practicum.commerce.store.validation.StoreValidationService;
 
-import lombok.extern.slf4j.Slf4j;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-@Slf4j
 public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
-    
+    private final StoreValidationService validationService;
 
+    public List<ProductDto> getProducts(
+            String category,
+            int page,
+            int size,
+            String sortBy,
+            String sortDir,
+            String sort) {
 
-    public List<ProductDto> getProductsByCategory(String categoryStr, int page, int size, String sortBy, String sortDir) {
-        Optional<ProductCategory> category = Optional.ofNullable(categoryStr)
-                .filter(cat -> !cat.isEmpty())
-                .map(cat -> ProductCategory.valueOf(cat.toUpperCase()));
+        Sort sortSpec = buildSort(sortBy, sortDir, sort);
+        Pageable pageable = PageRequest.of(page, size, sortSpec);
 
-        Sort sort = Sort.by(Sort.Direction.fromString(sortDir != null ? sortDir : "ASC"), 
-                            sortBy != null ? sortBy : "productName");
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        Page<ProductEntity> entityPage = category
-                .map(cat -> productRepository.findByProductCategoryAndProductState(cat, ProductState.ACTIVE, pageable))
-                .orElseGet(() -> productRepository.findByProductState(ProductState.ACTIVE, pageable));
-
-        return entityPage.getContent().stream()
-                .map(productMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    public Page<ProductEntity> getProductsPage(String categoryStr, int page, int size, String sortBy, String sortDir) {
-        Optional<ProductCategory> category = Optional.ofNullable(categoryStr)
-                .filter(cat -> !cat.isEmpty())
-                .map(cat -> ProductCategory.valueOf(cat.toUpperCase()));
-
-        Sort sort = Sort.by(Sort.Direction.fromString(sortDir != null ? sortDir : "ASC"), 
-                            sortBy != null ? sortBy : "productName");
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        return category
-                .map(cat -> productRepository.findByProductCategoryAndProductState(cat, ProductState.ACTIVE, pageable))
-                .orElseGet(() -> productRepository.findByProductState(ProductState.ACTIVE, pageable));
-    }
-
-    @Transactional
-    public ProductDto createProduct(ProductDto productDto) {
-        ProductEntity entity = productMapper.toEntity(productDto);
-        // При добавлении продукта в магазин, он должен быть в активном состоянии
-        entity.setProductState(ProductState.ACTIVE);
-        // Установка quantityState из DTO, а не по умолчанию
-        if (productDto.getQuantityState() != null) {
-            entity.setQuantityState(productDto.getQuantityState());
+        Page<ProductEntity> pageResult;
+        if (category != null) {
+            ProductCategory cat = parseCategory(category);
+            pageResult = productRepository.findByProductCategoryAndProductState(cat, ProductState.ACTIVE, pageable);
         } else {
-            entity.setQuantityState(QuantityState.ENOUGH); // по умолчанию
+            pageResult = productRepository.findByProductState(ProductState.ACTIVE, pageable);
         }
 
-        ProductEntity savedEntity = productRepository.save(entity);
-        log.info("Created product {} with state {}", savedEntity.getProductId(), savedEntity.getProductState());
-        return productMapper.toDto(savedEntity);
+        return pageResult.map(productMapper::toDto).getContent();
     }
 
     @Transactional
-    public ProductDto updateProduct(ProductDto productDto) {
-        ProductEntity existing = productRepository.findById(productDto.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found"));
-
-        ProductEntity updatedEntity = productMapper.toEntity(productDto);
-        updatedEntity.setProductState(existing.getProductState());
-        updatedEntity.setQuantityState(existing.getQuantityState());
-        updatedEntity = productRepository.save(updatedEntity);
-        log.info("Updated product {} to state {}", updatedEntity.getProductId(), updatedEntity.getProductState());
-        return productMapper.toDto(updatedEntity);
+    public ProductDto createProduct(ProductDto dto) {
+        ProductEntity entity = productMapper.toEntity(dto);
+        entity.setProductState(ProductState.ACTIVE);
+        entity.setQuantityState(dto.getQuantityState() != null ? dto.getQuantityState() : QuantityState.ENOUGH);
+        return productMapper.toDto(productRepository.save(entity));
     }
 
     @Transactional
-    public ProductDto removeProductFromStoreWithResult(UUID productId) {
-        ProductEntity product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
+    public ProductDto updateProduct(ProductDto dto) {
+        ProductEntity existing = getEntity(dto.getProductId());
+        ProductEntity updated = productMapper.toEntity(dto);
+        updated.setProductState(existing.getProductState());
+        updated.setQuantityState(existing.getQuantityState());
+        return productMapper.toDto(productRepository.save(updated));
+    }
+
+    @Transactional
+    public ProductDto deactivateProduct(UUID productId) {
+        ProductEntity product = getEntity(productId);
         product.setProductState(ProductState.DEACTIVATE);
-        ProductEntity updatedProduct = productRepository.save(product);
-        log.info("Removed product {} by setting state to {}", updatedProduct.getProductId(), updatedProduct.getProductState());
-        return productMapper.toDto(updatedProduct);
+        return productMapper.toDto(productRepository.save(product));
     }
 
-
-
     @Transactional
-    public ProductDto setProductQuantityState(UUID productId, String quantityState) {
-        ProductEntity product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
-        QuantityState state = QuantityState.valueOf(quantityState.toUpperCase());
+    public ProductDto updateQuantityState(UUID productId, String quantityState) {
+        QuantityState state = parseQuantityState(quantityState);
+        ProductEntity product = getEntity(productId);
         product.setQuantityState(state);
-        ProductEntity updatedProduct = productRepository.save(product);
-        log.info("Set quantity state for product {} to {}, product state remains {}", 
-                 updatedProduct.getProductId(), updatedProduct.getQuantityState(), updatedProduct.getProductState());
-        return productMapper.toDto(updatedProduct);
+        return productMapper.toDto(productRepository.save(product));
     }
 
     public ProductDto getProductById(UUID productId) {
-        // Получаем товар независимо от его состояния
-        ProductEntity entity = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
-
-        return productMapper.toDto(entity);
+        return productMapper.toDto(getEntity(productId));
     }
 
+    private ProductEntity getEntity(UUID id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
+    }
 
+    private ProductCategory parseCategory(String value) {
+        try {
+            return ProductCategory.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid category: " + value);
+        }
+    }
+
+    private QuantityState parseQuantityState(String value) {
+        try {
+            return QuantityState.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid quantity state: " + value);
+        }
+    }
+
+    private Sort buildSort(String sortBy, String sortDir, String sort) {
+        String field = validationService.validateSortField(sortBy);
+        String dir = validationService.validateSortDirection(sortDir);
+        if (sort != null && !sort.isBlank()) {
+            String[] parts = sort.split(",");
+            field = validationService.validateSortField(parts[0]);
+            if (parts.length > 1) dir = validationService.validateSortDirection(parts[1]);
+        }
+        return Sort.by(Sort.Direction.fromString(dir), field);
+    }
 }

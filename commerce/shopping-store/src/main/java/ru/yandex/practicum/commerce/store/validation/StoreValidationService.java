@@ -1,8 +1,8 @@
-package ru.yandex.practicum.commerce.validation;
+package ru.yandex.practicum.commerce.store.validation;
 
 import java.util.UUID;
 
-public interface ValidationService {
+public interface StoreValidationService {
     
     UUID validateAndConvertProductId(String productId);
     
