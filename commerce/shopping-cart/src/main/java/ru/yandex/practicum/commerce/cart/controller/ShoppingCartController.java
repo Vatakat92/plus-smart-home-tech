@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import ru.yandex.practicum.commerce.cart.service.ShoppingCartService;
 import ru.yandex.practicum.commerce.contract.shopping.cart.ShoppingCartOperations;
@@ -16,6 +18,10 @@ import ru.yandex.practicum.commerce.dto.ShoppingCartDto;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
 
 @Slf4j
 @RestController
@@ -33,8 +39,8 @@ public class ShoppingCartController implements ShoppingCartOperations {
 
     @Override
     public ShoppingCartDto addProductToShoppingCart(
-            String username,
-            Map<UUID, Integer> products)
+            @RequestParam String username,
+            @Valid @RequestBody @NotNull @NotEmpty Map<UUID, Integer> products)
             throws ProductInShoppingCartNotInWarehouseException,
             ProductInShoppingCartLowQuantityInWarehouseException {
 
@@ -44,8 +50,8 @@ public class ShoppingCartController implements ShoppingCartOperations {
 
     @Override
     public ShoppingCartDto removeFromShoppingCart(
-            String username,
-            List<UUID> productIds)
+            @RequestParam String username,
+            @Valid @RequestBody @NotNull @NotEmpty List<UUID> productIds)
             throws NoProductsInShoppingCartException {
 
         log.info("Remove products {} from shopping cart for user {}", productIds, username);
@@ -54,8 +60,8 @@ public class ShoppingCartController implements ShoppingCartOperations {
 
     @Override
     public ShoppingCartDto changeProductQuantity(
-            String username,
-            ChangeProductQuantityRequest changeProductQuantityRequest)
+            @RequestParam String username,
+            @Valid @RequestBody @NotNull ChangeProductQuantityRequest changeProductQuantityRequest)
             throws NoProductsInShoppingCartException,
             ProductInShoppingCartNotInWarehouseException,
             ProductInShoppingCartLowQuantityInWarehouseException {

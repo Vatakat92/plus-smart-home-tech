@@ -9,15 +9,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Positive;
-
 
 import ru.yandex.practicum.commerce.dto.ShoppingCartDto;
 import ru.yandex.practicum.commerce.dto.ChangeProductQuantityRequest;
 import ru.yandex.practicum.commerce.contract.shopping.cart.exception.NoProductsInShoppingCartException;
 import ru.yandex.practicum.commerce.contract.shopping.cart.exception.ProductInShoppingCartNotInWarehouseException;
 import ru.yandex.practicum.commerce.contract.shopping.cart.exception.ProductInShoppingCartLowQuantityInWarehouseException;
-
 
 import java.util.List;
 import java.util.Map;
@@ -31,20 +28,20 @@ public interface ShoppingCartOperations {
     @PutMapping("/api/v1/shopping-cart")
     ShoppingCartDto addProductToShoppingCart(
             @RequestParam String username,
-            @RequestBody @Valid @NotNull @NotEmpty Map<@NotNull UUID, @NotNull @Positive Integer> products)
+            @Valid @RequestBody @NotNull @NotEmpty Map<UUID, Integer> products)
             throws ProductInShoppingCartNotInWarehouseException,
                    ProductInShoppingCartLowQuantityInWarehouseException;
 
     @PostMapping("/api/v1/shopping-cart/remove")
     ShoppingCartDto removeFromShoppingCart(
             @RequestParam String username,
-            @RequestBody @Valid @NotNull @NotEmpty List<@NotNull UUID> productIds)
+            @Valid @RequestBody @NotNull @NotEmpty List<UUID> productIds)
             throws NoProductsInShoppingCartException;
 
     @PostMapping("/api/v1/shopping-cart/change-quantity")
     ShoppingCartDto changeProductQuantity(
             @RequestParam String username,
-            @RequestBody @Valid ChangeProductQuantityRequest changeProductQuantityRequest)
+            @Valid @RequestBody @NotNull ChangeProductQuantityRequest changeProductQuantityRequest)
             throws NoProductsInShoppingCartException,
                    ProductInShoppingCartNotInWarehouseException,
                    ProductInShoppingCartLowQuantityInWarehouseException;
