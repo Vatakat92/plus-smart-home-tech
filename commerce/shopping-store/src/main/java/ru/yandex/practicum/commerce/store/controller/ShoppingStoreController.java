@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
@@ -44,31 +46,34 @@ public class ShoppingStoreController implements ShoppingStoreOperations {
         List<ProductDto> products =
                 productService.getProducts(category, page, validSize, validSortBy, validSortDir, sort);
 
-        SortedContentResponseDto.SortInfo sortInfo = new SortedContentResponseDto.SortInfo(validSortBy, validSortDir);
+        // Получаем фактически применённое направление сортировки
+        String actualSortDir = productService.getActualSortDirection(validSortDir, sort);
+
+        SortedContentResponseDto.SortInfo sortInfo = new SortedContentResponseDto.SortInfo(validSortBy, actualSortDir);
 
         return SortedContentResponseDto.of(products, List.of(sortInfo));
     }
 
     @Override
-    public ProductDto createProduct(@Valid ProductDto productDto) {
+    public ProductDto createProduct(@Valid @RequestBody ProductDto productDto) {
         log.info("Create product {}", productDto);
         return productService.createProduct(productDto);
     }
 
     @Override
-    public ProductDto updateProduct(@Valid ProductDto productDto) {
+    public ProductDto updateProduct(@Valid @RequestBody ProductDto productDto) {
         log.info("Update product {}", productDto.getProductId());
         return productService.updateProduct(productDto);
     }
 
     @Override
-    public ProductDto removeProductFromStore(@NotNull UUID productId) {
+    public ProductDto removeProductFromStore(@RequestBody @NotNull UUID productId) {
         log.info("Deactivate product {}", productId);
         return productService.deactivateProduct(productId);
     }
 
     @Override
-    public ProductDto setProductQuantityState(@NotNull String productId, @NotNull String quantityState) {
+    public ProductDto setProductQuantityState(@RequestParam @NotNull String productId, @RequestParam @NotNull String quantityState) {
         UUID id = validationService.validateAndConvertProductId(productId);
         return productService.updateQuantityState(id, quantityState); // теперь сервис принимает UUID
     }

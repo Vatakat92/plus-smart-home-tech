@@ -8,7 +8,7 @@ public interface CartValidationService {
 
     void validateUsername(String username);
 
-    void validateProducts(Map<UUID, Integer> products);
+    void validateProducts(Map<UUID, Long> products);
 
     void validateProductIds(List<UUID> productIds);
 }

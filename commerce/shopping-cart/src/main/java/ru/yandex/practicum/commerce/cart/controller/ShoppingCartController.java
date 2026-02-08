@@ -10,8 +10,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import ru.yandex.practicum.commerce.cart.service.ShoppingCartService;
 import ru.yandex.practicum.commerce.contract.shopping.cart.ShoppingCartOperations;
 import ru.yandex.practicum.commerce.contract.shopping.cart.exception.NoProductsInShoppingCartException;
-import ru.yandex.practicum.commerce.contract.shopping.cart.exception.ProductInShoppingCartLowQuantityInWarehouseException;
-import ru.yandex.practicum.commerce.contract.shopping.cart.exception.ProductInShoppingCartNotInWarehouseException;
 import ru.yandex.practicum.commerce.dto.ChangeProductQuantityRequest;
 import ru.yandex.practicum.commerce.dto.ShoppingCartDto;
 
@@ -32,6 +30,12 @@ public class ShoppingCartController implements ShoppingCartOperations {
     private final ShoppingCartService shoppingCartService;
 
     @Override
+    public ShoppingCartDto getCart(String shoppingCartId) {
+        log.info("Get shopping cart by id {}", shoppingCartId);
+        return shoppingCartService.getShoppingCartById(shoppingCartId);
+    }
+
+    @Override
     public ShoppingCartDto getShoppingCart(String username) {
         log.info("Get shopping cart for user {}", username);
         return shoppingCartService.getShoppingCart(username);
@@ -40,9 +44,7 @@ public class ShoppingCartController implements ShoppingCartOperations {
     @Override
     public ShoppingCartDto addProductToShoppingCart(
             @RequestParam String username,
-            @Valid @RequestBody @NotNull @NotEmpty Map<UUID, Integer> products)
-            throws ProductInShoppingCartNotInWarehouseException,
-            ProductInShoppingCartLowQuantityInWarehouseException {
+            @Valid @RequestBody @NotNull @NotEmpty Map<UUID, Long> products) {
 
         log.info("Add products {} to shopping cart for user {}", products, username);
         return shoppingCartService.addProductToShoppingCart(username, products);
@@ -62,9 +64,7 @@ public class ShoppingCartController implements ShoppingCartOperations {
     public ShoppingCartDto changeProductQuantity(
             @RequestParam String username,
             @Valid @RequestBody @NotNull ChangeProductQuantityRequest changeProductQuantityRequest)
-            throws NoProductsInShoppingCartException,
-            ProductInShoppingCartNotInWarehouseException,
-            ProductInShoppingCartLowQuantityInWarehouseException {
+            throws NoProductsInShoppingCartException {
 
         log.info("Change quantity for product {} to {} in shopping cart for user {}",
                 changeProductQuantityRequest.getProductId(),

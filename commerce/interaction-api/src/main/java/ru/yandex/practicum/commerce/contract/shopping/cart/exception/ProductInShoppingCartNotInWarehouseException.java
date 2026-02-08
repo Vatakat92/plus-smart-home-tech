@@ -1,6 +1,6 @@
 package ru.yandex.practicum.commerce.contract.shopping.cart.exception;
 
-public class ProductInShoppingCartNotInWarehouseException extends Exception {
+public class ProductInShoppingCartNotInWarehouseException extends RuntimeException {
     public ProductInShoppingCartNotInWarehouseException(String message) {
         super(message);
     }

@@ -5,16 +5,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import jakarta.validation.Valid;
 
 import ru.yandex.practicum.commerce.dto.*;
 import ru.yandex.practicum.commerce.contract.warehouse.WarehouseOperations;
 import ru.yandex.practicum.commerce.warehouse.service.WarehouseService;
 
+import java.util.Map;
+import java.util.UUID;
+
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/warehouse")
 @RequiredArgsConstructor
 @Validated
 public class WarehouseController implements WarehouseOperations {
@@ -43,5 +44,23 @@ public class WarehouseController implements WarehouseOperations {
     public AddressDto getAddress() {
         log.info("Getting warehouse address");
         return service.getAddress();
+    }
+
+    @Override
+    public BookedProductsDto assemblyProductForOrderFromShoppingCart(@Valid @RequestBody AssemblyProductsForOrderRequest request) {
+        log.info("Assembling products for order: {}", request.getOrderId());
+        return service.assemblyProductForOrderFromShoppingCart(request);
+    }
+
+    @Override
+    public void shippedToDelivery(@Valid @RequestBody ShippedToDeliveryRequest request) {
+        log.info("Shipping to delivery: {}", request.getOrderId());
+        service.shippedToDelivery(request);
+    }
+
+    @Override
+    public void acceptReturn(@Valid @RequestBody Map<UUID, Long> products) {
+        log.info("Accepting return: {}", products);
+        service.acceptReturn(products);
     }
 }

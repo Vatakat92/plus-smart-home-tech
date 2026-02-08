@@ -22,7 +22,7 @@ public class CartValidationServiceImpl implements CartValidationService {
     }
 
     @Override
-    public void validateProducts(Map<UUID, Integer> products) {
+    public void validateProducts(Map<UUID, Long> products) {
         if (products == null || products.isEmpty()) {
             log.warn("Products map is empty");
             throw new ProductNotFoundException("Products list must not be empty");

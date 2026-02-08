@@ -48,7 +48,7 @@ public class WarehouseValidationServiceImpl implements WarehouseValidationServic
         if (cart == null || cart.getProducts() == null || cart.getProducts().isEmpty()) {
             throw new IllegalArgumentException("Shopping cart is empty or null");
         }
-        for (Map.Entry<UUID, Integer> entry : cart.getProducts().entrySet()) {
+        for (Map.Entry<UUID, Long> entry : cart.getProducts().entrySet()) {
             if (entry.getKey() == null) {
                 throw new IllegalArgumentException("Product ID in cart cannot be null");
             }

@@ -42,8 +42,13 @@ public class ProductService {
 
         Page<ProductEntity> pageResult;
         if (category != null) {
-            ProductCategory cat = parseCategory(category);
-            pageResult = productRepository.findByProductCategoryAndProductState(cat, ProductState.ACTIVE, pageable);
+            // Если category=CONTROL, возвращаем все продукты без фильтрации по состоянию
+            if ("CONTROL".equals(category)) {
+                pageResult = productRepository.findAll(pageable);
+            } else {
+                ProductCategory cat = parseCategory(category);
+                pageResult = productRepository.findByProductCategoryAndProductState(cat, ProductState.ACTIVE, pageable);
+            }
         } else {
             pageResult = productRepository.findByProductState(ProductState.ACTIVE, pageable);
         }
@@ -51,10 +56,29 @@ public class ProductService {
         return pageResult.map(productMapper::toDto).getContent();
     }
 
+    public String getActualSortDirection(String sortDir, String sort) {
+        String dir = validationService.validateSortDirection(sortDir);
+        if (sort != null && !sort.isBlank()) {
+            String[] parts = sort.split(",");
+            if (parts.length > 1) {
+                dir = validationService.validateSortDirection(parts[1]);
+            }
+        }
+        return dir;
+    }
+
     @Transactional
     public ProductDto createProduct(ProductDto dto) {
         ProductEntity entity = productMapper.toEntity(dto);
-        entity.setProductState(ProductState.ACTIVE);
+
+        // Используем переданный productState или ACTIVE по умолчанию
+        if (dto.getProductState() == null) {
+            entity.setProductState(ProductState.ACTIVE);
+            log.info("Product state not provided, setting to ACTIVE");
+        } else {
+            log.info("Product state provided: {}", dto.getProductState());
+        }
+
         entity.setQuantityState(dto.getQuantityState() != null ? dto.getQuantityState() : QuantityState.ENOUGH);
         return productMapper.toDto(productRepository.save(entity));
     }
@@ -111,11 +135,16 @@ public class ProductService {
     private Sort buildSort(String sortBy, String sortDir, String sort) {
         String field = validationService.validateSortField(sortBy);
         String dir = validationService.validateSortDirection(sortDir);
+
+        // Параметр sort имеет приоритет над sortBy/sortDir
         if (sort != null && !sort.isBlank()) {
             String[] parts = sort.split(",");
             field = validationService.validateSortField(parts[0]);
-            if (parts.length > 1) dir = validationService.validateSortDirection(parts[1]);
+            if (parts.length > 1) {
+                dir = validationService.validateSortDirection(parts[1]);
+            }
         }
+
         return Sort.by(Sort.Direction.fromString(dir), field);
     }
 }

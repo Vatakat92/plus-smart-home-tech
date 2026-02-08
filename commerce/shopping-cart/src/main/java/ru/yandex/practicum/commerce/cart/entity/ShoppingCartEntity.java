@@ -32,7 +32,7 @@ public class ShoppingCartEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "products", columnDefinition = "jsonb")
     @ToString.Exclude
-    private Map<UUID, Integer> products = new HashMap<>();
+    private Map<UUID, Long> products = new HashMap<>();
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;

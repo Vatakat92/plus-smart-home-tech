@@ -1,6 +1,6 @@
 package ru.yandex.practicum.commerce.contract.shopping.cart.exception;
 
-public class ProductInShoppingCartLowQuantityInWarehouseException extends Exception {
+public class ProductInShoppingCartLowQuantityInWarehouseException extends RuntimeException {
     public ProductInShoppingCartLowQuantityInWarehouseException(String message) {
         super(message);
     }

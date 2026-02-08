@@ -10,7 +10,7 @@ import ru.yandex.practicum.commerce.cart.exception.ShoppingCartNotFoundException
 import ru.yandex.practicum.commerce.cart.mapper.ShoppingCartMapper;
 import ru.yandex.practicum.commerce.cart.repository.ShoppingCartRepository;
 import ru.yandex.practicum.commerce.cart.validation.CartValidationService;
-import ru.yandex.practicum.commerce.contract.warehouse.WarehouseFeignClient;
+import ru.yandex.practicum.commerce.feign.WarehouseFeignClient;
 import ru.yandex.practicum.commerce.dto.ChangeProductQuantityRequest;
 import ru.yandex.practicum.commerce.dto.ShoppingCartDto;
 import ru.yandex.practicum.commerce.contract.shopping.cart.exception.NoProductsInShoppingCartException;
@@ -46,11 +46,16 @@ public class ShoppingCartService {
                 });
     }
 
+    public ShoppingCartDto getShoppingCartById(String shoppingCartId) {
+        UUID cartId = UUID.fromString(shoppingCartId);
+        return shoppingCartRepository.findById(cartId)
+                .map(shoppingCartMapper::toDto)
+                .orElseThrow(() -> new ShoppingCartNotFoundException("Cart not found: " + shoppingCartId));
+    }
+
     @CircuitBreaker(name = "warehouse", fallbackMethod = "addProductToCartFallback")
     @Transactional
-    public ShoppingCartDto addProductToShoppingCart(String username, Map<UUID, Integer> productQuantities)
-            throws ProductInShoppingCartNotInWarehouseException,
-            ProductInShoppingCartLowQuantityInWarehouseException {
+    public ShoppingCartDto addProductToShoppingCart(String username, Map<UUID, Long> productQuantities) {
 
         cartValidationService.validateUsername(username);
         cartValidationService.validateProducts(productQuantities);
@@ -67,24 +72,20 @@ public class ShoppingCartService {
                     return shoppingCartRepository.save(newCart);
                 });
 
-        Map<UUID, Integer> tempProducts = new HashMap<>(cart.getProducts());
-        productQuantities.forEach((productId, quantity) -> tempProducts.merge(productId, quantity, Integer::sum));
+        Map<UUID, Long> tempProducts = new HashMap<>(cart.getProducts());
+        productQuantities.forEach((productId, quantity) -> tempProducts.merge(productId, quantity, Long::sum));
         ShoppingCartDto tempCart = new ShoppingCartDto();
         tempCart.setProducts(tempProducts);
 
         try {
             warehouseFeignClient.checkAvailability(tempCart);
+        } catch (ProductInShoppingCartNotInWarehouseException | ProductInShoppingCartLowQuantityInWarehouseException e) {
+            throw e;
         } catch (Exception e) {
-            if (e.getMessage().contains("not found")) {
-                throw new ProductInShoppingCartNotInWarehouseException("Product not found in warehouse");
-            } else if (e.getMessage().contains("low quantity")) {
-                throw new ProductInShoppingCartLowQuantityInWarehouseException("Low quantity in warehouse");
-            } else {
-                throw new ProductInShoppingCartNotInWarehouseException("Failed to check availability: " + e.getMessage());
-            }
+            throw new ProductInShoppingCartNotInWarehouseException("Failed to check availability: " + e.getMessage());
         }
 
-        productQuantities.forEach((productId, quantity) -> cart.getProducts().merge(productId, quantity, Integer::sum));
+        productQuantities.forEach((productId, quantity) -> cart.getProducts().merge(productId, quantity, Long::sum));
         return shoppingCartMapper.toDto(shoppingCartRepository.save(cart));
     }
 
@@ -123,9 +124,7 @@ public class ShoppingCartService {
 
     @Transactional
     public ShoppingCartDto changeProductQuantity(String username, ChangeProductQuantityRequest request)
-            throws NoProductsInShoppingCartException,
-            ProductInShoppingCartNotInWarehouseException,
-            ProductInShoppingCartLowQuantityInWarehouseException {
+            throws NoProductsInShoppingCartException {
 
         cartValidationService.validateUsername(username);
 
@@ -142,20 +141,17 @@ public class ShoppingCartService {
         if (request.getNewQuantity() <= 0) {
             cart.getProducts().remove(request.getProductId());
         } else {
-            Map<UUID, Integer> tempProducts = Map.of(request.getProductId(), request.getNewQuantity());
+            Map<UUID, Long> tempProducts = new HashMap<>();
+            tempProducts.put(request.getProductId(), request.getNewQuantity());
             ShoppingCartDto tempCart = new ShoppingCartDto();
             tempCart.setProducts(tempProducts);
 
             try {
                 warehouseFeignClient.checkAvailability(tempCart);
+            } catch (ProductInShoppingCartNotInWarehouseException | ProductInShoppingCartLowQuantityInWarehouseException e) {
+                throw e;
             } catch (Exception e) {
-                if (e.getMessage().contains("not found")) {
-                    throw new ProductInShoppingCartNotInWarehouseException("Product not found in warehouse");
-                } else if (e.getMessage().contains("low quantity")) {
-                    throw new ProductInShoppingCartLowQuantityInWarehouseException("Low quantity in warehouse");
-                } else {
-                    throw new ProductInShoppingCartNotInWarehouseException("Failed to check availability: " + e.getMessage());
-                }
+                throw new ProductInShoppingCartNotInWarehouseException("Failed to check availability: " + e.getMessage());
             }
 
             cart.getProducts().put(request.getProductId(), request.getNewQuantity());
@@ -164,7 +160,7 @@ public class ShoppingCartService {
         return shoppingCartMapper.toDto(shoppingCartRepository.save(cart));
     }
 
-    public ShoppingCartDto addProductToCartFallback(String username, Map<UUID, Integer> productQuantities, Throwable ex) {
+    public ShoppingCartDto addProductToCartFallback(String username, Map<UUID, Long> productQuantities, Throwable ex) {
         log.error("Ошибка при добавлении товаров в корзину. Сервис склада недоступен: {}. Запрошено добавление продуктов: {}",
                 ex.getMessage(), productQuantities);
 
