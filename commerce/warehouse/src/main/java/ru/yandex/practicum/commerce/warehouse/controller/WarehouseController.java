@@ -2,63 +2,65 @@ package ru.yandex.practicum.commerce.warehouse.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RequestBody;
+import jakarta.validation.Valid;
+
 import ru.yandex.practicum.commerce.dto.*;
-import ru.yandex.practicum.commerce.feign.WarehouseFeignClient;
+import ru.yandex.practicum.commerce.contract.warehouse.WarehouseOperations;
 import ru.yandex.practicum.commerce.warehouse.service.WarehouseService;
+
+import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @Validated
-public class WarehouseController implements WarehouseFeignClient {
-    
-    private final WarehouseService warehouseService;
-    
+public class WarehouseController implements WarehouseOperations {
+
+    private final WarehouseService service;
+
     @Override
-    public ResponseEntity<Void> addNewProductToWarehouse(NewProductInWarehouseRequest request) {
-        try {
-            warehouseService.addNewProductToWarehouse(request);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            log.error("Error adding new product to warehouse: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public void addNewProductToWarehouse(@Valid @RequestBody NewProductInWarehouseRequest request) {
+        log.info("Adding new product: {}", request);
+        service.addNewProductToWarehouse(request);
     }
 
     @Override
-    public ResponseEntity<BookedProductsDto> checkAvailability(ShoppingCartDto cart) {
-        try {
-            BookedProductsDto result = warehouseService.checkAvailability(cart);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            log.error("Error checking availability: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public BookedProductsDto checkAvailability(@Valid @RequestBody ShoppingCartDto cart) {
+        log.info("Checking availability: {}", cart);
+        return service.checkAvailability(cart);
     }
 
     @Override
-    public ResponseEntity<Void> addProductQuantity(AddProductToWarehouseRequest request) {
-        try {
-            warehouseService.addProductQuantity(request);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            log.error("Error adding product quantity: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public void addProductQuantity(@Valid @RequestBody AddProductToWarehouseRequest request) {
+        log.info("Adding quantity: {}", request);
+        service.addProductQuantity(request);
     }
 
     @Override
-    public ResponseEntity<AddressDto> getAddress() {
-        try {
-            AddressDto address = warehouseService.getAddress();
-            return ResponseEntity.ok(address);
-        } catch (Exception e) {
-            log.error("Error getting warehouse address: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public AddressDto getAddress() {
+        log.info("Getting warehouse address");
+        return service.getAddress();
+    }
+
+    @Override
+    public BookedProductsDto assemblyProductForOrderFromShoppingCart(@Valid @RequestBody AssemblyProductsForOrderRequest request) {
+        log.info("Assembling products for order: {}", request.getOrderId());
+        return service.assemblyProductForOrderFromShoppingCart(request);
+    }
+
+    @Override
+    public void shippedToDelivery(@Valid @RequestBody ShippedToDeliveryRequest request) {
+        log.info("Shipping to delivery: {}", request.getOrderId());
+        service.shippedToDelivery(request);
+    }
+
+    @Override
+    public void acceptReturn(@Valid @RequestBody Map<UUID, Long> products) {
+        log.info("Accepting return: {}", products);
+        service.acceptReturn(products);
     }
 }

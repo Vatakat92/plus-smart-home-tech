@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.commerce.warehouse.exception.ProductNotFoundException;
 import ru.yandex.practicum.commerce.dto.ErrorResponseDto;
+import ru.yandex.practicum.commerce.warehouse.exception.ProductNotFoundOnWarehouseException;
 
 import java.time.LocalDateTime;
 
@@ -56,4 +57,17 @@ public class GlobalExceptionHandler {
         log.error("Unexpected error: ", ex);
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+    @ExceptionHandler(ProductNotFoundOnWarehouseException.class)
+    public ResponseEntity<ErrorResponseDto> handleProductNotFoundOnWarehouseException(ProductNotFoundOnWarehouseException ex) {
+        ErrorResponseDto errorResponse = ErrorResponseDto.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.NOT_FOUND.value())
+                .error("Product Not Found on Warehouse")
+                .message(ex.getMessage())
+                .build();
+
+        log.error("Product not found on warehouse: {}", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
 }

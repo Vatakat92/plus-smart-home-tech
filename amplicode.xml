@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AmplicodePersistenceUnitSettings">
+    <persistence-units>
+      <persistence-unit moduleName="analyzer" name="Default">
+        <packages>
+          <package value="ru.yandex.practicum" />
+        </packages>
+      </persistence-unit>
+      <persistence-unit moduleName="shopping-cart" name="Default">
+        <packages>
+          <package value="ru.yandex.practicum.commerce.cart" />
+        </packages>
+      </persistence-unit>
+      <persistence-unit moduleName="shopping-store" name="Default">
+        <packages>
+          <package value="ru.yandex.practicum.commerce.store" />
+        </packages>
+      </persistence-unit>
+      <persistence-unit moduleName="warehouse" name="Default">
+        <packages>
+          <package value="ru.yandex.practicum.commerce.warehouse" />
+        </packages>
+      </persistence-unit>
+      <persistence-unit moduleName="delivery" name="Default">
+        <packages>
+          <package value="ru.yandex.practicum.commerce.delivery" />
+        </packages>
+      </persistence-unit>
+      <persistence-unit moduleName="order" name="Default">
+        <packages>
+          <package value="ru.yandex.practicum.commerce.order" />
+        </packages>
+      </persistence-unit>
+      <persistence-unit moduleName="payment" name="Default">
+        <packages>
+          <package value="ru.yandex.practicum.commerce.payment" />
+        </packages>
+      </persistence-unit>
+    </persistence-units>
+  </component>
+</project>

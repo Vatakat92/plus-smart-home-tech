@@ -13,5 +13,5 @@ public class ChangeProductQuantityRequest {
     private UUID productId;
     
     @Positive(message = "New quantity must be positive")
-    private Integer newQuantity;
+    private Long newQuantity;
 }
