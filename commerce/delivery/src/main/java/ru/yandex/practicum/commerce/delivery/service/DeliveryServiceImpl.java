@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.commerce.delivery.entity.Delivery;
+import ru.yandex.practicum.commerce.delivery.exception.DeliveryNotFoundException;
 import ru.yandex.practicum.commerce.delivery.mapper.DeliveryMapper;
 import ru.yandex.practicum.commerce.delivery.repository.DeliveryRepository;
+import ru.yandex.practicum.commerce.delivery.validation.DeliveryValidationService;
 import ru.yandex.practicum.commerce.dto.*;
 import ru.yandex.practicum.commerce.feign.OrderFeignClient;
 import ru.yandex.practicum.commerce.feign.WarehouseFeignClient;
@@ -16,6 +18,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 @Slf4j
 public class DeliveryServiceImpl implements DeliveryService {
 
@@ -23,6 +26,7 @@ public class DeliveryServiceImpl implements DeliveryService {
     private final DeliveryMapper deliveryMapper;
     private final WarehouseFeignClient warehouseFeignClient;
     private final OrderFeignClient orderFeignClient;
+    private final DeliveryValidationService deliveryValidationService;
 
     private static final String ADDRESS_1 = "ADDRESS_1";
     private static final String ADDRESS_2 = "ADDRESS_2";
@@ -32,6 +36,7 @@ public class DeliveryServiceImpl implements DeliveryService {
     @Transactional
     public DeliveryDto planDelivery(DeliveryDto deliveryDto) {
         log.info("Planning delivery for order: {}", deliveryDto.getOrderId());
+        deliveryValidationService.validateDeliveryDto(deliveryDto);
 
         Delivery delivery = Delivery.builder()
                 .fromAddress(deliveryMapper.toEntity(deliveryDto.getFromAddress()))
@@ -47,20 +52,16 @@ public class DeliveryServiceImpl implements DeliveryService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public BigDecimal deliveryCost(OrderDto order) {
         log.info("Calculating delivery cost for order: {}", order.getOrderId());
+        deliveryValidationService.validateOrderId(order.getOrderId());
 
-        // Get delivery info
         Delivery delivery = deliveryRepository.findByOrderId(order.getOrderId())
-                .orElseThrow(() -> new RuntimeException("Delivery not found for order: " + order.getOrderId()));
+                .orElseThrow(() -> new DeliveryNotFoundException("Delivery not found for order: " + order.getOrderId()));
 
         AddressDto warehouseAddress = warehouseFeignClient.getAddress();
-
-        // Base calculation
         BigDecimal cost = BASE_RATE;
 
-        // Step 1: Apply warehouse address multiplier
         String warehouseStreet = warehouseAddress.getStreet();
         if (warehouseStreet != null) {
             if (warehouseStreet.contains(ADDRESS_1)) {
@@ -71,21 +72,17 @@ public class DeliveryServiceImpl implements DeliveryService {
         }
         cost = cost.add(BASE_RATE);
 
-        // Step 2: Fragile products
         if (Boolean.TRUE.equals(order.getFragile())) {
             BigDecimal fragileCost = cost.multiply(BigDecimal.valueOf(0.2));
             cost = cost.add(fragileCost);
         }
 
-        // Step 3: Weight
-        Double weight = order.getDeliveryWeight() != null ? order.getDeliveryWeight() : 0.0;
+        double weight = order.getDeliveryWeight() != null ? order.getDeliveryWeight() : 0.0;
         cost = cost.add(BigDecimal.valueOf(weight).multiply(BigDecimal.valueOf(0.3)));
 
-        // Step 4: Volume
-        Double volume = order.getDeliveryVolume() != null ? order.getDeliveryVolume() : 0.0;
+        double volume = order.getDeliveryVolume() != null ? order.getDeliveryVolume() : 0.0;
         cost = cost.add(BigDecimal.valueOf(volume).multiply(BigDecimal.valueOf(0.2)));
 
-        // Step 5: Address check
         String toStreet = delivery.getToAddress() != null ? delivery.getToAddress().getStreet() : null;
         if (warehouseStreet != null && toStreet != null && !warehouseStreet.equals(toStreet)) {
             BigDecimal addressCost = cost.multiply(BigDecimal.valueOf(0.2));
@@ -99,14 +96,14 @@ public class DeliveryServiceImpl implements DeliveryService {
     @Transactional
     public void deliveryPicked(UUID orderId) {
         log.info("Delivery picked for order: {}", orderId);
+        deliveryValidationService.validateOrderId(orderId);
 
         Delivery delivery = deliveryRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new RuntimeException("Delivery not found for order: " + orderId));
+                .orElseThrow(() -> new DeliveryNotFoundException("Delivery not found for order: " + orderId));
 
         delivery.setDeliveryState(DeliveryState.IN_PROGRESS);
         deliveryRepository.save(delivery);
 
-        // Notify warehouse that products are shipped
         ShippedToDeliveryRequest shippedRequest = ShippedToDeliveryRequest.builder()
                 .orderId(orderId)
                 .deliveryId(delivery.getDeliveryId())
@@ -118,14 +115,14 @@ public class DeliveryServiceImpl implements DeliveryService {
     @Transactional
     public void deliverySuccessful(UUID orderId) {
         log.info("Delivery successful for order: {}", orderId);
+        deliveryValidationService.validateOrderId(orderId);
 
         Delivery delivery = deliveryRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new RuntimeException("Delivery not found for order: " + orderId));
+                .orElseThrow(() -> new DeliveryNotFoundException("Delivery not found for order: " + orderId));
 
         delivery.setDeliveryState(DeliveryState.DELIVERED);
         deliveryRepository.save(delivery);
 
-        // Update order status
         orderFeignClient.delivery(orderId);
     }
 
@@ -133,14 +130,14 @@ public class DeliveryServiceImpl implements DeliveryService {
     @Transactional
     public void deliveryFailed(UUID orderId) {
         log.info("Delivery failed for order: {}", orderId);
+        deliveryValidationService.validateOrderId(orderId);
 
         Delivery delivery = deliveryRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new RuntimeException("Delivery not found for order: " + orderId));
+                .orElseThrow(() -> new DeliveryNotFoundException("Delivery not found for order: " + orderId));
 
         delivery.setDeliveryState(DeliveryState.FAILED);
         deliveryRepository.save(delivery);
 
-        // Update order status
         orderFeignClient.deliveryFailed(orderId);
     }
 }

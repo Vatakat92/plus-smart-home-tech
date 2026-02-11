@@ -7,8 +7,10 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.commerce.dto.*;
 import ru.yandex.practicum.commerce.feign.*;
 import ru.yandex.practicum.commerce.order.entity.Order;
+import ru.yandex.practicum.commerce.order.exception.OrderNotFoundException;
 import ru.yandex.practicum.commerce.order.mapper.OrderMapper;
 import ru.yandex.practicum.commerce.order.repository.OrderRepository;
+import ru.yandex.practicum.commerce.order.validation.OrderValidationService;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -16,6 +18,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 @Slf4j
 public class OrderServiceImpl implements OrderService {
 
@@ -25,16 +28,15 @@ public class OrderServiceImpl implements OrderService {
     private final PaymentFeignClient paymentFeignClient;
     private final DeliveryFeignClient deliveryFeignClient;
     private final ShoppingCartFeignClient shoppingCartFeignClient;
+    private final OrderValidationService orderValidationService;
 
     @Override
     @Transactional
     public OrderDto createNewOrder(CreateNewOrderRequest request) {
         log.info("Creating new order for shopping cart: {}", request.getShoppingCartId());
+        orderValidationService.validateCreateOrderRequest(request);
 
-        // Get shopping cart info
         ShoppingCartDto cart = shoppingCartFeignClient.getCart(request.getShoppingCartId().toString());
-
-        // Check availability in warehouse
         BookedProductsDto bookedProducts = warehouseFeignClient.checkAvailability(cart);
 
         Order order = Order.builder()
@@ -52,10 +54,9 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<OrderDto> getClientOrders(String username) {
         log.info("Getting orders for user: {}", username);
-        // This is a simplified implementation - in real app we would get orders by user
+        orderValidationService.validateUsername(username);
         return orderRepository.findAll().stream()
                 .map(orderMapper::toDto)
                 .toList();
@@ -140,7 +141,6 @@ public class OrderServiceImpl implements OrderService {
         log.info("Starting assembly for order: {}", orderId);
         Order order = getOrder(orderId);
 
-        // Reserve products in warehouse
         AssemblyProductsForOrderRequest request = AssemblyProductsForOrderRequest.builder()
                 .orderId(orderId)
                 .products(order.getProducts())
@@ -169,9 +169,9 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderDto returnOrder(ProductReturnRequest request) {
         log.info("Processing return for order: {}", request.getOrderId());
+        orderValidationService.validateProductReturnRequest(request);
         Order order = getOrder(request.getOrderId());
 
-        // Return products to warehouse
         warehouseFeignClient.acceptReturn(request.getProducts());
 
         order.setState(OrderState.PRODUCT_RETURNED);
@@ -180,6 +180,6 @@ public class OrderServiceImpl implements OrderService {
 
     private Order getOrder(UUID orderId) {
         return orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
+                .orElseThrow(() -> new OrderNotFoundException("Order not found: " + orderId));
     }
 }

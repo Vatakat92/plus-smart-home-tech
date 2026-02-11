@@ -5,7 +5,6 @@ import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 import ru.yandex.practicum.commerce.dto.DeliveryState;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity

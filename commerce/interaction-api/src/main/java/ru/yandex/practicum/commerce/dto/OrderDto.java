@@ -1,5 +1,6 @@
 package ru.yandex.practicum.commerce.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,7 +17,10 @@ import java.util.UUID;
 public class OrderDto {
     private UUID orderId;
     private UUID shoppingCartId;
+
+    @NotNull(message = "Products cannot be null")
     private Map<UUID, Long> products;
+
     private UUID paymentId;
     private UUID deliveryId;
     private OrderState state;
